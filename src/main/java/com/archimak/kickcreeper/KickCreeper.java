@@ -37,6 +37,7 @@ public class KickCreeper implements ModInitializer {
 		ServerLifecycleEvents.SERVER_STARTED.register(s -> {
 			servidor = s;
 			Registro.info("MUNDO", "Mundo abierto, listo para recibir canjes");
+			Etiquetas.metodo(); // deja registrado en el log qué método de tags usa esta versión
 		});
 		ServerLifecycleEvents.SERVER_STOPPING.register(s -> {
 			servidor = null;
