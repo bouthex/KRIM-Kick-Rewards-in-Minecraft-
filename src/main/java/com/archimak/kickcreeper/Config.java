@@ -38,11 +38,13 @@ public final class Config {
 		}
 	}
 
-	/** Deja solo letras, números y signos básicos (sin comillas ni barras), máximo 32 caracteres. */
-	public static String limpiar(String t) {
+	/** Deja solo letras, números y signos básicos (sin comillas ni barras), máximo 32 caracteres (o el máximo indicado). */
+	public static String limpiar(String t) { return limpiar(t, 32); }
+
+	public static String limpiar(String t, int max) {
 		if (t == null) return "";
-		t = t.replaceAll("[^\\p{L}\\p{N} _\\-.,!¡?¿]", "").replaceAll("\\s+", " ").trim();
-		if (t.length() > 32) t = t.substring(0, 32).trim();
+		t = t.replaceAll("[^\\p{L}\\p{N} _\\-.,!¡?¿:()]", "").replaceAll("\\s+", " ").trim();
+		if (t.length() > max) t = t.substring(0, max).trim();
 		String bajo = t.toLowerCase();
 		for (String b : bloqueadas) if (bajo.contains(b)) {
 			Registro.aviso("FILTRO", "Texto bloqueado por palabra prohibida: \"" + t + "\"");

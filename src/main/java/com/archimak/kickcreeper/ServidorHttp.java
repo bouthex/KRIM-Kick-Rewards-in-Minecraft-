@@ -57,26 +57,56 @@ public final class ServidorHttp {
 
 		switch (ruta) {
 			case "/creeper" -> {
-				String usuario = Config.limpiar(params.get("usuario"));
-				String nombre = Config.limpiar(params.get("nombre"));
-				if (nombre.isEmpty()) nombre = usuario.isEmpty() ? "Creeper del chat" : usuario;
-				if (usuario.isEmpty()) usuario = "El chat";
-				boolean ok = KickCreeper.spawnear(nombre, usuario);
+				String usuario = usuario(params);
+				String nombre = Config.limpiar(primero(params, "nombre", "texto"));
+				if (nombre.isEmpty()) nombre = usuario.equals("El chat") ? "Creeper del chat" : usuario;
+				String n = nombre;
+				boolean ok = KickCreeper.encolar("creeper", "nombre=\"" + n + "\" usuario=\"" + usuario + "\"",
+						(s, p) -> KickCreeper.creeper(s, p, n, usuario));
+				responder(c, ok ? 200 : 503, ok ? "ok" : "no hay ningun mundo abierto");
+			}
+			case "/cartel" -> {
+				String usuario = usuario(params);
+				String texto = Config.limpiar(primero(params, "texto", "nombre"), 45);
+				if (texto.isEmpty()) texto = "Saludos!";
+				String t = texto;
+				boolean ok = KickCreeper.encolar("cartel", "texto=\"" + t + "\" usuario=\"" + usuario + "\"",
+						(s, p) -> Cartel.colocar(s, p, t, usuario));
+				responder(c, ok ? 200 : 503, ok ? "ok" : "no hay ningun mundo abierto");
+			}
+			case "/mascota" -> {
+				String usuario = usuario(params);
+				String tipo = params.getOrDefault("tipo", "perro").trim().toLowerCase();
+				String nombre = Config.limpiar(primero(params, "nombre", "texto"));
+				if (nombre.isEmpty()) nombre = usuario.equals("El chat") ? "Mascota del chat" : usuario;
+				String n = nombre;
+				boolean ok = KickCreeper.encolar("mascota", "tipo=" + tipo + " nombre=\"" + n + "\" usuario=\"" + usuario + "\"",
+						(s, p) -> Mascota.crear(s, p, tipo, n, usuario));
 				responder(c, ok ? 200 : 503, ok ? "ok" : "no hay ningun mundo abierto");
 			}
 			case "/estado" -> responder(c, 200,
-					"Kick Creeper " + KickCreeper.VERSION + "\n"
+					"KRIM " + KickCreeper.VERSION + "\n"
 					+ "Minecraft " + KickCreeper.VERSION_MC + "\n"
 					+ "Mundo abierto: " + (KickCreeper.hayMundo() ? "si" : "no") + "\n"
 					+ "Canjes recibidos en esta sesion: " + KickCreeper.PEDIDOS.get() + "\n"
 					+ "Explosiones de creepers del chat: " + KickCreeper.EXPLOSIONES.get() + "\n"
 					+ "Puerto: " + Config.puerto + "\n");
-			case "/" -> responder(c, 200, "Kick Creeper activo. Diagnostico: /estado");
+			case "/" -> responder(c, 200, "KRIM activo. Rutas: /creeper /cartel /mascota /estado");
 			default -> {
 				Registro.aviso("HTTP", "Ruta desconocida: " + ruta);
 				responder(c, 404, "no existe");
 			}
 		}
+	}
+
+	private static String usuario(Map<String, String> params) {
+		String u = Config.limpiar(params.get("usuario"));
+		return u.isEmpty() ? "El chat" : u;
+	}
+
+	private static String primero(Map<String, String> params, String a, String b) {
+		String v = params.get(a);
+		return v == null || v.isBlank() ? params.get(b) : v;
 	}
 
 	private static Map<String, String> parsear(String query) {

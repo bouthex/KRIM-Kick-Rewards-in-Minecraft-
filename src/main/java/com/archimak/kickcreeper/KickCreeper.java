@@ -1,15 +1,19 @@
 package com.archimak.kickcreeper;
 
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
+/** KRIM - Kick Rewards in Minecraft. El id del mod sigue siendo "kickcreeper" para no cambiar config ni logs. */
 public class KickCreeper implements ModInitializer {
 	public static final String MOD_ID = "kickcreeper";
 	/** Tag que marca a los creepers del chat. El mixin solo actúa sobre estos. */
@@ -31,7 +35,7 @@ public class KickCreeper implements ModInitializer {
 	public void onInitialize() {
 		Registro.iniciar();
 		Config.cargar();
-		Registro.info("INICIO", "Kick Creeper " + VERSION + " | Minecraft " + VERSION_MC
+		Registro.info("INICIO", "KRIM " + VERSION + " | Minecraft " + VERSION_MC
 				+ " | Java " + System.getProperty("java.version") + " | puerto " + Config.puerto
 				+ " | palabras bloqueadas: " + Config.bloqueadas.size());
 		ServerLifecycleEvents.SERVER_STARTED.register(s -> {
@@ -46,35 +50,61 @@ public class KickCreeper implements ModInitializer {
 		ServidorHttp.iniciar(Config.puerto);
 	}
 
-	/** Llamado desde el hilo HTTP. Devuelve false si no hay un mundo abierto. */
-	public static boolean spawnear(String nombre, String usuario) {
+	/**
+	 * Llamado desde el hilo HTTP. Encola la acción en el hilo del juego (funciona con cualquier menú abierto).
+	 * Devuelve false si no hay un mundo abierto.
+	 */
+	public static boolean encolar(String tipo, String detalle, BiConsumer<MinecraftServer, ServerPlayer> accion) {
 		MinecraftServer s = servidor;
 		if (s == null) {
-			Registro.aviso("CANJE", "Rechazado (no hay mundo abierto): nombre=\"" + nombre + "\" usuario=\"" + usuario + "\"");
+			Registro.aviso("CANJE", "Rechazado (no hay mundo abierto): " + tipo + " " + detalle);
 			return false;
 		}
 		int n = PEDIDOS.incrementAndGet();
-		Registro.info("CANJE", "#" + n + " recibido: nombre=\"" + nombre + "\" usuario=\"" + usuario + "\"");
-		// Los comandos se ejecutan en el hilo del juego, no importa qué menú tengas abierto
-		s.execute(() -> ejecutar(s, nombre, usuario));
+		Registro.info("CANJE", "#" + n + " " + tipo + ": " + detalle);
+		s.execute(() -> {
+			ServerPlayer p = jugador(s);
+			if (p == null) {
+				Registro.aviso("CANJE", "#" + n + " sin jugador en el mundo, se descarta");
+				return;
+			}
+			try {
+				accion.accept(s, p);
+			} catch (Exception e) {
+				Registro.error("CANJE", "#" + n + " " + tipo + " falló", e);
+			}
+		});
 		return true;
 	}
 
-	private static void ejecutar(MinecraftServer s, String nombre, String usuario) {
-		CommandSourceStack src = s.createCommandSourceStack().withSuppressedOutput();
-		String nbt = "{Tags:[\"" + TAG + "\",\"kc_nuevo\"],CustomNameVisible:1b,"
-				+ "CustomName:{text:\"" + nombre + "\",color:\"green\"}}";
-
-		// 1) Detrás del jugador si hay lugar libre
-		cmd(s, src, "execute as @p at @s positioned ^ ^ ^-3 if block ~ ~ ~ #minecraft:air if block ~ ~1 ~ #minecraft:air run summon minecraft:creeper ~ ~ ~ " + nbt);
-		// 2) Si no había lugar (pared, cueva chica), al lado del jugador
-		cmd(s, src, "execute unless entity @e[tag=kc_nuevo] as @p at @s run summon minecraft:creeper ~ ~ ~ " + nbt);
-		cmd(s, src, "tag @e[tag=kc_nuevo] remove kc_nuevo");
-		Registro.info("SPAWN", "Comandos de spawn ejecutados para \"" + nombre + "\"");
-		cmd(s, src, "title @p actionbar {text:\"" + usuario + " te mandó un creeper\",color:\"green\"}");
+	private static ServerPlayer jugador(MinecraftServer s) {
+		List<ServerPlayer> l = s.getPlayerList().getPlayers();
+		return l.isEmpty() ? null : l.get(0);
 	}
 
-	private static void cmd(MinecraftServer s, CommandSourceStack src, String comando) {
+	// ---------- Creeper ----------
+	public static void creeper(MinecraftServer s, ServerPlayer p, String nombre, String usuario) {
+		CommandSourceStack src = fuente(s);
+		String nbt = "{Tags:[\"" + TAG + "\",\"kc_nuevo\"],CustomNameVisible:1b,"
+				+ "CustomName:{text:\"" + nombre + "\",color:\"green\"}}";
+		// 1) Detrás del jugador si hay lugar libre; 2) si no, al lado
+		cmd(s, src, "execute as @p at @s positioned ^ ^ ^-3 if block ~ ~ ~ #minecraft:air if block ~ ~1 ~ #minecraft:air run summon minecraft:creeper ~ ~ ~ " + nbt);
+		cmd(s, src, "execute unless entity @e[tag=kc_nuevo] as @p at @s run summon minecraft:creeper ~ ~ ~ " + nbt);
+		cmd(s, src, "tag @e[tag=kc_nuevo] remove kc_nuevo");
+		Registro.info("SPAWN", "Creeper \"" + nombre + "\" creado");
+		aviso(s, src, usuario + " te mandó un creeper", "green");
+	}
+
+	// ---------- Utilidades compartidas ----------
+	static CommandSourceStack fuente(MinecraftServer s) {
+		return s.createCommandSourceStack().withSuppressedOutput();
+	}
+
+	static void aviso(MinecraftServer s, CommandSourceStack src, String texto, String color) {
+		cmd(s, src, "title @p actionbar {text:\"" + texto + "\",color:\"" + color + "\"}");
+	}
+
+	static void cmd(MinecraftServer s, CommandSourceStack src, String comando) {
 		try {
 			s.getCommands().performPrefixedCommand(src, comando);
 		} catch (Exception e) {
