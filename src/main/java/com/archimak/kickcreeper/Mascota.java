@@ -75,7 +75,7 @@ public final class Mascota {
 			}
 			String quien = NOMBRES.getOrDefault(id, id);
 			Registro.info("MASCOTA", id + " \"" + nombre + "\" de " + usuario + extra);
-			KickCreeper.aviso(s, src, usuario + " te regaló " + quien + ": " + nombre, "aqua");
+			KickCreeper.avisoGrande(s, src, usuario + " te regaló " + quien + ": " + nombre, "aqua");
 			return;
 		}
 		Registro.error("MASCOTA", "No se pudo crear ningún animal para \"" + nombre + "\" de " + usuario, null);

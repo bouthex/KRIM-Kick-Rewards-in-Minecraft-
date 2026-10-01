@@ -36,10 +36,11 @@ public final class Cartel {
 		List<String> l = lineas(texto);
 		while (l.size() < 3) l.add("");
 		String firma = ("- " + usuario);
-		if (firma.length() > ANCHO) firma = firma.substring(0, ANCHO);
+		if (firma.length() > 13) firma = firma.substring(0, 13); // en negrita entra un poco menos
 
-		String nbt = "{is_waxed:1b,front_text:{messages:[\"" + l.get(0) + "\",\"" + l.get(1) + "\",\"" + l.get(2)
-				+ "\",{text:\"" + firma + "\",color:\"dark_gray\"}]}}";
+		// Texto negro iluminado (tinta brillante) y la firma en rojo y negrita
+		String nbt = "{is_waxed:1b,front_text:{has_glowing_text:1b,color:\"black\",messages:[\"" + l.get(0) + "\",\"" + l.get(1) + "\",\"" + l.get(2)
+				+ "\",{text:\"" + firma + "\",color:\"red\",bold:1b}]}}";
 		KickCreeper.cmd(s, src, "execute as @p at @s run setblock "
 				+ pos.getX() + " " + pos.getY() + " " + pos.getZ()
 				+ " minecraft:oak_sign[rotation=" + rotacion + "]" + nbt + " keep");

@@ -104,6 +104,13 @@ public class KickCreeper implements ModInitializer {
 		cmd(s, src, "title @p actionbar {text:\"" + texto + "\",color:\"" + color + "\"}");
 	}
 
+	/** Aviso más grande (subtítulo en el centro de la pantalla, unos 3 segundos). */
+	static void avisoGrande(MinecraftServer s, CommandSourceStack src, String texto, String color) {
+		cmd(s, src, "title @p times 10 60 20");
+		cmd(s, src, "title @p subtitle {text:\"" + texto + "\",color:\"" + color + "\"}");
+		cmd(s, src, "title @p title {text:\"\"}");
+	}
+
 	static void cmd(MinecraftServer s, CommandSourceStack src, String comando) {
 		try {
 			s.getCommands().performPrefixedCommand(src, comando);
