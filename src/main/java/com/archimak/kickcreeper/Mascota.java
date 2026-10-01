@@ -1,5 +1,6 @@
 package com.archimak.kickcreeper;
 
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -39,7 +40,58 @@ public final class Mascota {
 			Map.entry("tropical_fish", "un pez tropical"), Map.entry("axolotl", "un ajolote"), Map.entry("squid", "un calamar"),
 			Map.entry("glow_squid", "un calamar brillante"), Map.entry("dolphin", "un delfín"), Map.entry("tadpole", "un renacuajo"));
 
+	// ---------- Entrada animada: el animal cae del cielo despacio con brillos dorados ----------
+	private static final int ALTURA_MAX = 4;      // bloques por encima del suelo
+	private static final int DURACION_MAX = 200;  // ticks (10 s) como máximo de estela
+	private static final String BRILLO = "minecraft:dust{color:[1.0,0.82,0.25],scale:1.3}";
+	private static final List<Cayendo> CAYENDO = new ArrayList<>();
+	private static boolean tickRegistrado;
+
+	private static final class Cayendo {
+		final Entity e; int ticks;
+		Cayendo(Entity e) { this.e = e; }
+	}
+
+	private static void registrarTick() {
+		if (tickRegistrado) return;
+		tickRegistrado = true;
+		ServerTickEvents.END_SERVER_TICK.register(Mascota::tick);
+	}
+
+	private static void tick(MinecraftServer s) {
+		if (CAYENDO.isEmpty()) return;
+		CommandSourceStack src = KickCreeper.fuente(s);
+		for (int i = CAYENDO.size() - 1; i >= 0; i--) {
+			Cayendo c = CAYENDO.get(i);
+			c.ticks++;
+			String en = "execute at " + c.e.getUUID() + " run ";
+			if (c.e.isRemoved() || c.ticks > DURACION_MAX) { CAYENDO.remove(i); continue; }
+			boolean llego = c.ticks > 5 && (c.e.onGround() || c.e.isInWater());
+			if (llego) {
+				KickCreeper.cmd(s, src, en + "particle minecraft:totem_of_undying ~ ~0.5 ~ 0.5 0.4 0.5 0.25 35 force");
+				KickCreeper.cmd(s, src, en + "particle " + BRILLO + " ~ ~0.3 ~ 0.8 0.2 0.8 0 25 force");
+				KickCreeper.cmd(s, src, en + "playsound minecraft:entity.player.levelup neutral @a ~ ~ ~ 0.6 1.6");
+				CAYENDO.remove(i);
+			} else if (c.ticks % 2 == 0) {
+				KickCreeper.cmd(s, src, en + "particle " + BRILLO + " ~ ~0.5 ~ 0.35 0.35 0.35 0 5 force");
+				if (c.ticks % 6 == 0) KickCreeper.cmd(s, src, en + "particle minecraft:wax_on ~ ~0.5 ~ 0.3 0.3 0.3 0 2 force");
+			}
+		}
+	}
+
+	/** Lugar de aparición: 2 bloques delante del jugador si hay aire, y lo más alto posible (hasta 4) sin techo. */
+	private static BlockPos lugarDeCaida(ServerLevel lvl, ServerPlayer p) {
+		double rad = Math.toRadians(p.getYRot());
+		BlockPos pies = p.blockPosition();
+		BlockPos frente = BlockPos.containing(p.getX() - Math.sin(rad) * 2, p.getY(), p.getZ() + Math.cos(rad) * 2);
+		BlockPos base = lvl.getBlockState(frente).isAir() && lvl.getBlockState(frente.above()).isAir() ? frente : pies;
+		int h = 0;
+		while (h < ALTURA_MAX && lvl.getBlockState(base.above(h + 2)).isAir()) h++;
+		return base.above(h);
+	}
+
 	public static void crear(MinecraftServer s, ServerPlayer p, String tipoPedido, String nombre, String usuario) {
+		registrarTick();
 		ServerLevel lvl = (ServerLevel) p.level();
 		BlockPos agua = buscarAgua(lvl, p.blockPosition());
 		String pedido = ALIAS.getOrDefault(tipoPedido, tipoPedido);
@@ -60,7 +112,7 @@ public final class Mascota {
 		CommandSourceStack src = KickCreeper.fuente(s);
 		for (String id : candidatos) {
 			boolean deAgua = Config.animalesAgua.contains(id);
-			BlockPos donde = deAgua ? agua : p.blockPosition();
+			BlockPos donde = deAgua ? caidaAlAgua(lvl, agua) : lugarDeCaida(lvl, p);
 			Entity e = invocar(s, src, lvl, id, donde, deAgua, nombre);
 			if (e == null) {
 				Registro.aviso("MASCOTA", "No se pudo crear \"" + id + "\" (¿id inválido en esta versión?), pruebo otro");
@@ -86,12 +138,27 @@ public final class Mascota {
 		String marca = "krim_n" + System.nanoTime();
 		String nbt = "{Tags:[\"krim_mascota\",\"" + marca + "\"],PersistenceRequired:1b,CustomNameVisible:1b,"
 				+ "CustomName:{text:\"" + nombre + "\",color:\"aqua\"}" + (MANSOS.contains(id) ? ",Tame:1b" : "") + "}";
-		String lugar = deAgua ? (pos.getX() + 0.5) + " " + pos.getY() + " " + (pos.getZ() + 0.5) : "~ ~ ~";
+		String lugar = (pos.getX() + 0.5) + " " + pos.getY() + " " + (pos.getZ() + 0.5);
 		KickCreeper.cmd(s, src, "execute as @p at @s run summon minecraft:" + id + " " + lugar + " " + nbt);
 
+		// Caída lenta (sin daño) mientras dura la entrada
+		KickCreeper.cmd(s, src, "effect give @e[tag=" + marca + "] minecraft:slow_falling 10 0 true");
+		KickCreeper.cmd(s, src, "execute as @p at @s run playsound minecraft:block.amethyst_block.chime neutral @a "
+				+ (pos.getX() + 0.5) + " " + pos.getY() + " " + (pos.getZ() + 0.5) + " 1 1.2");
+
 		List<Entity> encontradas = lvl.getEntities((Entity) null, new AABB(pos).inflate(4), e -> Etiquetas.tiene(e, marca));
+		if (!encontradas.isEmpty()) CAYENDO.add(new Cayendo(encontradas.get(0)));
 		KickCreeper.cmd(s, src, "tag @e[tag=" + marca + "] remove " + marca);
 		return encontradas.isEmpty() ? null : encontradas.get(0);
+	}
+
+	/** Para los de agua: aparecen hasta 3 bloques arriba del agua (si hay aire) y caen adentro. */
+	private static BlockPos caidaAlAgua(ServerLevel lvl, BlockPos agua) {
+		BlockPos sup = agua;
+		while (lvl.getBlockState(sup.above()).is(Blocks.WATER)) sup = sup.above(); // superficie
+		int h = 0;
+		while (h < 3 && lvl.getBlockState(sup.above(h + 1)).isAir()) h++;
+		return sup.above(h);
 	}
 
 	/** Bloque de agua a 4 bloques o menos del jugador (incluido el que pisa), o null. */
