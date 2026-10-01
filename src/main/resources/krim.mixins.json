@@ -1,0 +1,9 @@
+{
+	"required": true,
+	"package": "com.archimak.krim.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"mixins": ["ServerLevelMixin", "LivingEntityMixin"],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
