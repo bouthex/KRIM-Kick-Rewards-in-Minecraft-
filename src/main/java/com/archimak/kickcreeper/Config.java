@@ -13,8 +13,13 @@ import java.util.Properties;
 
 /** config/kickcreeper.properties (se crea solo la primera vez). */
 public final class Config {
+	static final String TIERRA_DEF = "wolf,cat,parrot,horse,donkey,mule,llama,camel,fox,ocelot,panda,pig,cow,mooshroom,sheep,chicken,rabbit,frog,armadillo,sniffer,turtle,allay";
+	static final String AGUA_DEF = "cod,salmon,tropical_fish,axolotl,squid,glow_squid,dolphin,tadpole";
+
 	public static int puerto = 47110;
 	public static List<String> bloqueadas = new ArrayList<>();
+	public static List<String> animalesTierra = lista(TIERRA_DEF);
+	public static List<String> animalesAgua = lista(AGUA_DEF);
 
 	static void cargar() {
 		Path archivo = FabricLoader.getInstance().getConfigDir().resolve("kickcreeper.properties");
@@ -29,13 +34,32 @@ public final class Config {
 					p.store(w, "Kick Creeper - palabras_bloqueadas separadas por coma (ej: palabra1,palabra2)");
 				}
 			}
+			boolean agregar = false;
+			if (p.getProperty("animales_tierra") == null) { p.setProperty("animales_tierra", TIERRA_DEF); agregar = true; }
+			if (p.getProperty("animales_agua") == null) { p.setProperty("animales_agua", AGUA_DEF); agregar = true; }
+			if (agregar) {
+				try (Writer w = Files.newBufferedWriter(archivo, StandardCharsets.UTF_8)) {
+					p.store(w, "KRIM - palabras_bloqueadas y listas de animales separadas por coma. Animales: ids de Minecraft (ej: cow,pig)");
+				}
+			}
 			puerto = Integer.parseInt(p.getProperty("puerto", "47110").trim());
+			animalesTierra = lista(p.getProperty("animales_tierra", TIERRA_DEF));
+			animalesAgua = lista(p.getProperty("animales_agua", AGUA_DEF));
 			for (String s : p.getProperty("palabras_bloqueadas", "").split(",")) {
 				if (!s.isBlank()) bloqueadas.add(s.trim().toLowerCase());
 			}
 		} catch (Exception e) {
 			Registro.error("CONFIG", "No se pudo leer la config, uso valores por defecto", e);
 		}
+	}
+
+	private static List<String> lista(String v) {
+		List<String> l = new ArrayList<>();
+		for (String s : v.split(",")) {
+			String t = s.trim().toLowerCase().replace("minecraft:", "");
+			if (t.matches("[a-z0-9_]+")) l.add(t);
+		}
+		return l;
 	}
 
 	/** Deja solo letras, números y signos básicos (sin comillas ni barras), máximo 32 caracteres (o el máximo indicado). */

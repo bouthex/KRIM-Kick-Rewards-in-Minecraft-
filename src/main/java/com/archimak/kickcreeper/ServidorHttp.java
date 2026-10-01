@@ -76,7 +76,7 @@ public final class ServidorHttp {
 			}
 			case "/mascota" -> {
 				String usuario = usuario(params);
-				String tipo = params.getOrDefault("tipo", "perro").trim().toLowerCase();
+				String tipo = params.getOrDefault("tipo", "aleatorio").trim().toLowerCase();
 				String nombre = Config.limpiar(primero(params, "nombre", "texto"));
 				if (nombre.isEmpty()) nombre = usuario.equals("El chat") ? "Mascota del chat" : usuario;
 				String n = nombre;
