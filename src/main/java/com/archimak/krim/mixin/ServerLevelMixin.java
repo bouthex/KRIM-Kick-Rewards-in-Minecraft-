@@ -34,12 +34,14 @@ public abstract class ServerLevelMixin {
 			ServerLevel level, Entity source, DamageSource damageSource, ExplosionDamageCalculator calculator,
 			Vec3 pos, float radius, boolean fire, Explosion.BlockInteraction interaction,
 			Operation<ServerExplosion> original) {
-		if (source != null && Etiquetas.tiene(source, Krim.TAG)) {
+		if (source != null && Krim.esHostilDelChat(source)) {
 			int n = Krim.EXPLOSIONES.incrementAndGet();
-			Registro.info("EXPLOSION", "#" + n + " creeper del chat \"" + source.getName().getString() + "\" en "
+			Registro.info("EXPLOSION", "#" + n + " explosion del chat \"" + source.getName().getString() + "\" en "
 					+ Math.round(pos.x) + " " + Math.round(pos.y) + " " + Math.round(pos.z) + " radio " + radius
 					+ " -> sin bloques, solo jugador");
-			return original.call(level, source, damageSource, SoloJugador.INSTANCIA, pos, radius, false, Explosion.BlockInteraction.KEEP);
+			// Las cargas de viento (breeze) conservan su cálculo original; todo lo demás solo daña al jugador
+			ExplosionDamageCalculator calc = interaction == Explosion.BlockInteraction.TRIGGER_BLOCK ? calculator : SoloJugador.INSTANCIA;
+			return original.call(level, source, damageSource, calc, pos, radius, false, Explosion.BlockInteraction.KEEP);
 		}
 		return original.call(level, source, damageSource, calculator, pos, radius, fire, interaction);
 	}

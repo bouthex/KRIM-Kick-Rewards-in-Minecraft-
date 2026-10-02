@@ -6,6 +6,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.TraceableEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +22,8 @@ public class Krim implements ModInitializer {
 	public static final String TAG = "kick_creeper";
 	/** Tag de los animales del chat (tampoco cambiar). */
 	public static final String TAG_ANIMAL = "krim_mascota";
+	/** Tag de todo lo que invoca la ruleta (tampoco cambiar). */
+	public static final String TAG_RULETA = "krim_ruleta";
 	/** Botín vacío: los mobs del chat no sueltan ítems al morir. */
 	public static final String SIN_BOTIN = "DeathLootTable:\"minecraft:empty\"";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
@@ -52,6 +56,7 @@ public class Krim implements ModInitializer {
 			Registro.info("MUNDO", "Mundo cerrado");
 		});
 		Tamano.iniciar();
+		Ruleta.iniciar();
 		ServidorHttp.iniciar(Config.puerto);
 	}
 
@@ -98,6 +103,23 @@ public class Krim implements ModInitializer {
 		cmd(s, src, "tag @e[tag=kc_nuevo] remove kc_nuevo");
 		Registro.info("SPAWN", "Creeper \"" + nombre + "\" creado");
 		aviso(s, src, usuario + " te mandó un creeper", "green");
+	}
+
+	// ---------- Quién es "del chat" ----------
+	/** Cualquier entidad creada por KRIM (creeper, animales, ruleta). */
+	public static boolean esDelChat(Entity e) {
+		return e != null && (Etiquetas.tiene(e, TAG) || Etiquetas.tiene(e, TAG_ANIMAL) || Etiquetas.tiene(e, TAG_RULETA));
+	}
+
+	/** Creepers y cosas de la ruleta, o sus proyectiles (flechas, bolas de fuego, TNT): solo pueden dañar al jugador. */
+	public static boolean esHostilDelChat(Entity e) {
+		if (e == null) return false;
+		if (Etiquetas.tiene(e, TAG) || Etiquetas.tiene(e, TAG_RULETA)) return true;
+		if (e instanceof TraceableEntity t) {
+			Entity dueno = t.getOwner();
+			return dueno != null && (Etiquetas.tiene(dueno, TAG) || Etiquetas.tiene(dueno, TAG_RULETA));
+		}
+		return false;
 	}
 
 	// ---------- Utilidades compartidas ----------

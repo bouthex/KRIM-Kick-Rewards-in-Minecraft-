@@ -90,6 +90,11 @@ public final class ServidorHttp {
 				boolean ok = Krim.encolar("tamano", "usuario=\"" + usuario + "\"", (s, p) -> Tamano.aplicar(s, p, usuario));
 				responder(c, ok ? 200 : 503, ok ? "ok" : "no hay ningun mundo abierto");
 			}
+			case "/ruleta" -> {
+				String usuario = usuario(params);
+				boolean ok = Krim.encolar("ruleta", "usuario=\"" + usuario + "\"", (s, p) -> Ruleta.pedir(s, p, usuario));
+				responder(c, ok ? 200 : 503, ok ? "ok" : "no hay ningun mundo abierto");
+			}
 			case "/estado" -> responder(c, 200,
 					"KRIM " + Krim.VERSION + "\n"
 					+ "Minecraft " + Krim.VERSION_MC + "\n"
@@ -97,7 +102,7 @@ public final class ServidorHttp {
 					+ "Canjes recibidos en esta sesion: " + Krim.PEDIDOS.get() + "\n"
 					+ "Explosiones de creepers del chat: " + Krim.EXPLOSIONES.get() + "\n"
 					+ "Puerto: " + Config.puerto + "\n");
-			case "/" -> responder(c, 200, "KRIM activo. Rutas: /creeper /cartel /mascota /tamano /estado");
+			case "/" -> responder(c, 200, "KRIM activo. Rutas: /creeper /cartel /mascota /tamano /ruleta /estado");
 			default -> {
 				Registro.aviso("HTTP", "Ruta desconocida: " + ruta);
 				responder(c, 404, "no existe");
