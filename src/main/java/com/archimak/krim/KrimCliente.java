@@ -17,11 +17,14 @@ import org.joml.Matrix3x2fStack;
  */
 public class KrimCliente implements ClientModInitializer {
 	// Colores por tipo de premio, con dos tonos para que los sectores vecinos se distingan
-	// [tipo][0 = tono A, 1 = tono B, 2 = claro (ganador)]   tipo: 0 bueno, 1 interactivo, 2 malo
+	// [tipo][0 = tono A, 1 = tono B, 2 = claro (ganador)]
+	// tipo: 0 bueno (verde), 1 interactivo (amarillo), 2 malo (rojo), 3 jefe/carnada (negro), 4 funny (rosa)
 	private static final int[][] COLORES = {
 			{ 0xFF2E9E46, 0xFF1F7A34, 0xFF9CFF9C },
 			{ 0xFFF2C21B, 0xFFD39B00, 0xFFFFF59D },
-			{ 0xFFE53935, 0xFFAF1F1F, 0xFFFF8A80 } };
+			{ 0xFFE53935, 0xFFAF1F1F, 0xFFFF8A80 },
+			{ 0xFF1C1C1C, 0xFF050505, 0xFF757575 },
+			{ 0xFFEC407A, 0xFFC2185B, 0xFFF8BBD0 } };
 
 	@Override
 	public void onInitializeClient() {
@@ -39,8 +42,22 @@ public class KrimCliente implements ClientModInitializer {
 				if (!pantalla.respondida()) mc.gui.setScreen(null);
 				pantalla = null;
 			}
+			// Funnys que congelan la pantalla (edit, créditos, apagón)
+			FunnyEstado.Efecto f = FunnyEstado.actual;
+			if (f != null && f.id() != funnyAbierto && mc.player != null && !f.tipo().equals("jumpscare")) {
+				funnyAbierto = f.id();
+				funny = new FunnyPantalla(f);
+				mc.gui.setScreen(funny);
+			}
+			if (funny != null && RuedaEstado.ahoraMs() - funny.efecto().inicioMs() > funny.efecto().duracionMs()) {
+				mc.gui.setScreen(null);
+				funny = null;
+			}
 		});
 	}
+
+	private static int funnyAbierto = -1;
+	private static FunnyPantalla funny;
 
 	private static int preguntaAbierta = -1;
 	private static PreguntaPantalla pantalla;
@@ -48,6 +65,31 @@ public class KrimCliente implements ClientModInitializer {
 	private static void dibujar(GuiGraphicsExtractor g, DeltaTracker dt) {
 		dibujarRueda(g);
 		dibujarResultadoPregunta(g);
+		dibujarJumpscare(g);
+	}
+
+	// ------------------------------------------------------------------ jumpscare: cara de creeper a pantalla completa
+	private static final String[] CREEPER = { "........", ".KK..KK.", ".KK..KK.", "...KK...", "..KKKK..", "..KKKK..", "..K..K..", "........" };
+
+	private static void dibujarJumpscare(GuiGraphicsExtractor g) {
+		FunnyEstado.Efecto f = FunnyEstado.actual;
+		if (f == null || !f.tipo().equals("jumpscare")) return;
+		long el = RuedaEstado.ahoraMs() - f.inicioMs();
+		if (el < 0 || el > f.duracionMs()) return;
+		Minecraft mc = Minecraft.getInstance();
+		int w = mc.getWindow().getGuiScaledWidth(), h = mc.getWindow().getGuiScaledHeight();
+		java.util.concurrent.ThreadLocalRandom r = java.util.concurrent.ThreadLocalRandom.current();
+		int sx = r.nextInt(-8, 9), sy = r.nextInt(-8, 9);
+		int lado = Math.round(Math.max(w, h) * 1.15f), t = lado / 8;
+		int ox = (w - lado) / 2 + sx, oy = (h - lado) / 2 + sy;
+		int verde = f.variante() == 0 ? 0xFF4CAF50 : 0xFF2E7D32;
+		g.fill(0, 0, w, h, verde);
+		for (int y = 0; y < 8; y++)
+			for (int x = 0; x < 8; x++) {
+				int c = CREEPER[y].charAt(x) == 'K' ? 0xFF0B0B0B : (((x * 7 + y * 3) % 5 == 0) ? 0xFF66BB6A : 0);
+				if (c != 0) g.fill(ox + x * t, oy + y * t, ox + x * t + t, oy + y * t + t, c);
+			}
+		if (el > 900) g.fill(0, 0, w, h, ((int) (255 * Math.min(1, (el - 900) / 400f)) << 24) | 0xFFFFFF);
 	}
 
 	// ------------------------------------------------------------------ resultado de la pregunta
@@ -144,7 +186,7 @@ public class KrimCliente implements ClientModInitializer {
 		m.rotate((float) Math.toRadians(rot));
 		float ancho = 360f / RuedaEstado.SECTORES;
 		for (int i = 0; i < RuedaEstado.SECTORES; i++) {
-			int[] paleta = COLORES[Math.max(0, Math.min(2, d.tipos()[i]))];
+			int[] paleta = COLORES[Math.max(0, Math.min(4, d.tipos()[i]))];
 			int color = (parpadeo && i == d.ganador()) ? 0xFFFFFFFF : (frenada && i == d.ganador()) ? paleta[2] : paleta[i % 2];
 			for (float a = i * ancho; a < (i + 1) * ancho; a += 1.4f) rayo(g, m, a, 0, radio, color, 4);
 		}
@@ -200,7 +242,7 @@ public class KrimCliente implements ClientModInitializer {
 		if (!frenada) {
 			int sec = RuedaEstado.Datos.sectorBajoPuntero(rot);
 			String actual = d.etiquetas()[sec];
-			int[] paleta = COLORES[Math.max(0, Math.min(2, d.tipos()[sec]))];
+			int[] paleta = COLORES[Math.max(0, Math.min(4, d.tipos()[sec]))];
 			float ys = radio + 16;
 			int mitad = Math.round(font.width(actual) * 1.6f) / 2 + 12;
 			g.fill(-mitad - 1, Math.round(ys) - 1, mitad + 1, Math.round(ys) + 23, 0xFF000000 | (paleta[0] & 0x00FFFFFF));

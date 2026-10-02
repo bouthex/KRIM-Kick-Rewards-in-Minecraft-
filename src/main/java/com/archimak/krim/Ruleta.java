@@ -104,6 +104,7 @@ public final class Ruleta {
 		if (!limpiado && jugador(s) != null) {
 			limpiado = true;
 			Atributos.limpiar(s); // por si el juego se cerró con un castigo puesto
+			Funnys.limpiar(s);    // por si se cerró con el mundo congelado o en cámara lenta
 		}
 		if (!TAREAS.isEmpty()) {
 			List<Tarea> listas = new ArrayList<>();
@@ -114,7 +115,7 @@ public final class Ruleta {
 		}
 
 		if (!girando) {
-			if (COLA.isEmpty() || Trivia.activa()) return;
+			if (COLA.isEmpty() || Trivia.activa() || Funnys.activo()) return;
 			ServerPlayer p = jugador(s);
 			if (p == null) return;
 			empezar(s, p);
@@ -173,7 +174,7 @@ public final class Ruleta {
 			int lado = r.nextBoolean() ? 1 : -1;
 			int pos = r.nextInt(100) < 65 ? Math.floorMod(ganador + lado, RuedaEstado.SECTORES)
 					: Math.floorMod(ganador + r.nextInt(2, RuedaEstado.SECTORES - 1), RuedaEstado.SECTORES);
-			if (pos != ganador) { etiquetas[pos] = List.of("WARDEN", "DRAGÓN", "WITHER").get(r.nextInt(3)); tipos[pos] = 2; }
+			if (pos != ganador) { etiquetas[pos] = List.of("WARDEN", "DRAGÓN", "WITHER").get(r.nextInt(3)); tipos[pos] = 3; }
 		}
 		float ancho = 360f / RuedaEstado.SECTORES;
 		float base = ((255f - ganador * ancho) % 360f + 360f) % 360f;
@@ -181,7 +182,7 @@ public final class Ruleta {
 		float anguloFinal = 360f * r.nextInt(5, 8) + base + jitter;
 
 		rueda = new RuedaEstado.Datos(usuarioActual, etiquetas, tipos, ganador, RuedaEstado.ahoraMs(), GIRO_MS, TOTAL_MS,
-				anguloFinal, premio.titulo(), premio.detalle(), new int[] { 0xFF7CFC7C, 0xFFFFE066, 0xFFFF6B6B }[Premios.tipo(premio)], COLA.size());
+				anguloFinal, premio.titulo(), premio.detalle(), new int[] { 0xFF7CFC7C, 0xFFFFE066, 0xFFFF6B6B, 0xFFBDBDBD, 0xFFFF80AB }[Premios.tipo(premio)], COLA.size());
 		RuedaEstado.actual = rueda;
 		girando = true; revelado = false; hecho = false; ultimoSector = -1;
 		cmd(s, "execute at @p run playsound minecraft:block.beacon.activate master @p ~ ~ ~ 0.8 1.4");
@@ -192,6 +193,8 @@ public final class Ruleta {
 			case BUENO -> "minecraft:ui.toast.challenge_complete";
 			case MALO -> "minecraft:entity.villager.no";
 			case HOSTIL -> "minecraft:entity.wither.shoot";
+			case JEFE -> "minecraft:entity.elder_guardian.curse";
+			case FUNNY -> "minecraft:block.note_block.cow_bell";
 			default -> "minecraft:entity.player.levelup";
 		};
 		cmd(s, "execute at @p run playsound " + sonido + " master @p ~ ~ ~ 1 1");

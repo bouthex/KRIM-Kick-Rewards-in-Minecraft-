@@ -27,7 +27,8 @@ import java.util.concurrent.ThreadLocalRandom;
  * Anti-repetición: no se repite ninguno de los últimos 24 premios ni sale 3 veces seguidas la misma categoría.
  */
 public final class Premios {
-	public enum Clase { BUENO, MALO, NEUTRO, HOSTIL }
+	/** JEFE = sección negra (jefes de mentira), FUNNY = sección rosa. */
+	public enum Clase { BUENO, MALO, NEUTRO, HOSTIL, JEFE, FUNNY }
 
 	@FunctionalInterface
 	public interface Accion { void hacer(MinecraftServer s, ServerPlayer p, String u); }
@@ -54,7 +55,7 @@ public final class Premios {
 
 	static String corta(String t) {
 		String s = t.replace("¡", "").replace("!", "").replace("»", "").replace("«", "").trim();
-		return s.length() > 13 ? s.substring(0, 12).trim() + "." : s;
+		return s.length() > 16 ? s.substring(0, 15).trim() + "." : s;
 	}
 
 	private static Premio pr(String cat, String clave, String titulo, String detalle, String color, Clase clase, Accion a) {
@@ -95,7 +96,7 @@ public final class Premios {
 	}
 
 	private static boolean permitido(Premio x, boolean tregua, boolean hostilesOk) {
-		if (x.clase() == Clase.HOSTIL && (tregua || !hostilesOk)) return false;
+		if ((x.clase() == Clase.HOSTIL || x.clase() == Clase.JEFE) && (tregua || !hostilesOk)) return false;
 		return !(x.clase() == Clase.MALO && tregua);
 	}
 
@@ -108,10 +109,12 @@ public final class Premios {
 		if (x < 450) return pr("trivia", "pregunta" + r().nextInt(4), "¡PREGUNTA!", "a ver qué tan culto sos", "aqua", Clase.NEUTRO,
 				(sv, pl, u) -> Trivia.preguntar(sv, us));
 		if (x < 480) return efecto(false);
-		if (x < 640) return burla(us, yo);
-		if (x < 670) return mensaje(us, yo);
-		if (x < 705) return frase(us);
-		if (x < 725) return castigo(p, us, yo);
+		if (x < 620) return burla(us, yo);
+		if (x < 645) return mensaje(us, yo);
+		if (x < 680) return frase(us);
+		if (x < 695) return castigo(p, us, yo);
+		if (x < 720) return jefe(us);
+		if (x < 790) return funny(us, yo);
 		if (x < 830) return locura(p, us, yo);
 		if (x < 852) return item(us);
 		if (x < 864) return guisito(us);
@@ -502,12 +505,7 @@ public final class Premios {
 			case 5 -> pr("locura", "gallinas", "¡LLUEVEN GALLINAS!", "cortesía de " + us, "aqua", Clase.NEUTRO, (sv, pl, u) -> lluvia(sv, "chicken", ",EggLayTime:2147483647", 10, 600, true));
 			case 6 -> pr("locura", "animales", "¡LLUEVEN ANIMALES!", "cortesía de " + us, "aqua", Clase.NEUTRO,
 					(sv, pl, u) -> lluvia(sv, uno(List.of("pig", "sheep", "cow", "frog", "rabbit", "armadillo")), "", 10, 600, true));
-			case 7 -> pr("locura", "disco", "DISCO LOCO", us + " puso música", "light_purple", Clase.NEUTRO, (sv, pl, u) -> {
-				String disco = uno(List.of("pigstep", "otherside", "cat", "chirp", "blocks", "creator", "relic", "precipice"));
-				cmd(sv, "execute at @p run playsound minecraft:music_disc." + disco + " record @p ~ ~ ~ 1 1");
-				for (int i = 0; i < 60; i++) Ruleta.despues(i * 10, s2 -> cmd(s2, "execute at @p run particle minecraft:note ~ ~2.2 ~ 1.5 0.5 1.5 1 3 force"));
-				Ruleta.despues(600, s2 -> cmd(s2, "stopsound @p record"));
-			});
+			case 7 -> pr("locura", "tamano2", "TAMAÑO RANDOM", "cortesía de " + us, "light_purple", Clase.NEUTRO, (sv, pl, u) -> Tamano.aplicar(sv, pl, us));
 			case 8 -> pr("locura", "enderman", "ENDERMAN BORRACHO", us + " te teletransportó", "dark_purple", Clase.NEUTRO, (sv, pl, u) -> {
 				BlockPos pos = suelo((ServerLevel) pl.level(), pl, 5, 10);
 				if (pos == null) return;
@@ -761,8 +759,62 @@ public final class Premios {
 	}
 
 	// =====================================================================
+	// JEFES DE MENTIRA (sección negra que SÍ puede salir): malos, pero no tanto
+	// =====================================================================
+	private static Premio jefe(String us) {
+		return switch (r().nextInt(4)) {
+			case 0 -> pr("jefe", "wardenbebe", "WARDEN BEBÉ", "tranqui, es chiquito", "dark_aqua", Clase.JEFE, (sv, pl, u) -> {
+				cmd(sv, "effect give @p minecraft:darkness 12 0 true");
+				cmd(sv, "execute at @p run playsound minecraft:entity.warden.emerge master @p ~ ~ ~ 1 1.3");
+				for (int i = 0; i < 6; i++) Ruleta.despues(20 + i * 20, s2 -> cmd(s2, "execute at @p run playsound minecraft:entity.warden.heartbeat master @p ~ ~ ~ 1 1.4"));
+				invocar(sv, lugar((ServerLevel) pl.level(), pl, Lugar.SUELO), "zombie", ZOMBIE + ",IsBaby:1b", "Warden", "dark_aqua");
+			});
+			case 1 -> pr("jefe", "dragontrucho", "DRAGÓN TRUCHO", "made in China", "dark_purple", Clase.JEFE, (sv, pl, u) -> {
+				cmd(sv, "execute at @p run playsound minecraft:entity.ender_dragon.growl master @p ~ ~ ~ 1 1.5");
+				cmd(sv, "execute at @p run particle minecraft:dragon_breath ~ ~6 ~ 2 1 2 0.02 120 force");
+				invocar(sv, lugar((ServerLevel) pl.level(), pl, Lugar.VUELA), "phantom", "", "Ender Dragon", "dark_purple");
+			});
+			case 2 -> pr("jefe", "withercarton", "WITHER DE CARTÓN", "hecho con cajas de " + us, "dark_gray", Clase.JEFE, (sv, pl, u) -> {
+				cmd(sv, "execute at @p run playsound minecraft:entity.wither.spawn master @p ~ ~ ~ 0.7 1.6");
+				cmd(sv, "effect give @p minecraft:wither 6 0 true");
+				invocar(sv, lugar((ServerLevel) pl.level(), pl, Lugar.SUELO), "wither_skeleton", "", "Wither", "dark_gray");
+			});
+			default -> pr("jefe", "jefefinal", "JEFE FINAL", "40 de vida, suerte", "dark_red", Clase.JEFE, (sv, pl, u) -> {
+				cmd(sv, "execute at @p run playsound minecraft:event.raid.horn master @p ~ ~ ~ 1 1");
+				invocar(sv, lugar((ServerLevel) pl.level(), pl, Lugar.SUELO), "zombie",
+						ZOMBIE + ",Health:40f,attributes:[{id:\"minecraft:max_health\",base:40.0d}]"
+								+ ",equipment:{head:{id:\"minecraft:leather_helmet\",count:1},chest:{id:\"minecraft:leather_chestplate\",count:1}}",
+						"JEFE FINAL de " + us, "dark_red");
+			});
+		};
+	}
+
+	// =====================================================================
+	// FUNNYS (sección rosa): edits de TikTok, créditos, apagón, cámara lenta, jumpscare, risas, disco
+	// =====================================================================
+	private static Premio funny(String us, String yo) {
+		int x = r().nextInt(100);
+		if (x < 40) return pr("funny", "edit" + r().nextInt(4), "EDIT DE TIKTOK", "con phonk y todo", "light_purple", Clase.FUNNY,
+				(sv, pl, u) -> Funnys.edit(sv, us, yo));
+		if (x < 52) return pr("funny", "creditos", "CRÉDITOS FINALES", "una película de " + us, "light_purple", Clase.FUNNY,
+				(sv, pl, u) -> Funnys.creditos(sv, us, yo));
+		if (x < 64) return pr("funny", "apagon", "SE CORTÓ LA LUZ", "gentileza de Edesur", "light_purple", Clase.FUNNY,
+				(sv, pl, u) -> Funnys.apagon(sv, us));
+		if (x < 74) return pr("funny", "lenta", "CÁMARA LENTA", "modo película", "light_purple", Clase.FUNNY, (sv, pl, u) -> Funnys.lenta(sv));
+		if (x < 84) return pr("funny", "jumpscare", "JUMPSCARE", "no mires...", "light_purple", Clase.FUNNY, (sv, pl, u) -> Funnys.jumpscare(sv));
+		if (x < 92) return pr("funny", "risas", "RISAS ENLATADAS", "el público se ríe de vos", "light_purple", Clase.FUNNY, (sv, pl, u) -> Funnys.risas(sv));
+		return pr("funny", "disco", "DISCO LOCO", us + " puso música", "light_purple", Clase.FUNNY, (sv, pl, u) -> {
+			String disco = uno(List.of("pigstep", "otherside", "cat", "chirp", "blocks", "creator", "relic", "precipice"));
+			cmd(sv, "execute at @p run playsound minecraft:music_disc." + disco + " record @p ~ ~ ~ 1 1");
+			for (int i = 0; i < 60; i++) Ruleta.despues(i * 10, s2 -> cmd(s2, "execute at @p run particle minecraft:note ~ ~2.2 ~ 1.5 0.5 1.5 1 3 force"));
+			Ruleta.despues(600, s2 -> cmd(s2, "stopsound @p record"));
+		});
+	}
+
+	// =====================================================================
 	// EFECTOS
 	// =====================================================================
+
 
 
 	private record Ef(String id, String nombre, int min, int max, int ampMax) {}
@@ -847,7 +899,7 @@ public final class Premios {
 		}
 		if (a == null || b == null) return null;
 		Premio pa = a, pb = b;
-		Clase peor = (pa.clase() == Clase.HOSTIL || pb.clase() == Clase.HOSTIL) ? Clase.HOSTIL
+		Clase peor = (pa.clase() == Clase.HOSTIL || pb.clase() == Clase.HOSTIL || pa.clase() == Clase.JEFE || pb.clase() == Clase.JEFE) ? Clase.HOSTIL
 				: (pa.clase() == Clase.MALO || pb.clase() == Clase.MALO) ? Clase.MALO : Clase.NEUTRO;
 		return pr("doble", pa.clave() + "+" + pb.clave(), "¡DOBLE!", corta(pa.titulo()) + " + " + corta(pb.titulo()), "gold", peor, (sv, pl, u) -> {
 			pa.accion().hacer(sv, pl, u);
@@ -953,7 +1005,7 @@ public final class Premios {
 	// =====================================================================
 	// Etiquetas falsas para los otros sectores de la rueda
 	// =====================================================================
-	/** Etiqueta de un sector falso y su tipo: 0 bueno (verde), 1 neutro/interactivo (amarillo), 2 malo (rojo). */
+	/** Etiqueta de un sector falso y su tipo: 0 bueno (verde), 1 interactivo (amarillo), 2 malo (rojo), 3 jefe (negro), 4 funny (rosa). */
 	public record Falsa(String texto, int tipo) {}
 
 	private static final List<Falsa> FALSAS;
@@ -969,13 +1021,17 @@ public final class Premios {
 		for (String t : List.of("MAPA", "PAPELITO", "LIBRO", "PUTO EL Q LEE", "NADA", "DOBLE", "TAMAÑO", "DISCO", "HEROBRINE",
 				"GALLINAS", "GLOBO", "LUNAR", "GUISITO", "RAMO", "GALLETA", "POESÍA", "FRASE", "PREGUNTA", "PARLANTE",
 				"MENSAJE", "TNT FALSA", "GIRÁ OTRA VEZ")) l.add(new Falsa(t, 1));
+		for (String t : List.of("EDIT TIKTOK", "CRÉDITOS", "SIN LUZ", "CÁMARA LENTA", "JUMPSCARE", "RISAS", "DISCO LOCO")) l.add(new Falsa(t, 4));
 		FALSAS = List.copyOf(l);
 	}
 
-	static Falsa etiquetaFalsa() { return uno(FALSAS); }
+	private static final List<Falsa> JEFES_FALSOS = List.of(new Falsa("WARDEN BEBÉ", 3), new Falsa("DRAGÓN TRUCHO", 3),
+			new Falsa("WITHER CARTÓN", 3), new Falsa("JEFE FINAL", 3));
+
+	static Falsa etiquetaFalsa() { return r().nextInt(100) < 6 ? uno(JEFES_FALSOS) : uno(FALSAS); }
 
 	/** Tipo de color del premio real: verde bueno, amarillo interactivo/neutro, rojo malo. */
 	static int tipo(Premio p) {
-		return switch (p.clase()) { case BUENO -> 0; case NEUTRO -> 1; default -> 2; };
+		return switch (p.clase()) { case BUENO -> 0; case NEUTRO -> 1; case JEFE -> 3; case FUNNY -> 4; default -> 2; };
 	}
 }
