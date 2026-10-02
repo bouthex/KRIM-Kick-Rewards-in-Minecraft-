@@ -102,13 +102,16 @@ public final class Premios {
 	private static Premio generar(MinecraftServer s, ServerPlayer p, String us, boolean tregua, boolean hostilesOk, boolean permitirDoble) {
 		String yo = p.getName().getString();
 		int x = r().nextInt(1000);
-		if (x < 220) return mob(p, us);
-		if (x < 410) return castigo(p, us, yo);
+		if (x < 200) return mob(p, us);
+		if (x < 375) return castigo(p, us, yo);
+		if (x < 410) return hablador(us, yo);
+		if (x < 450) return pr("trivia", "pregunta" + r().nextInt(4), "¡PREGUNTA!", "a ver qué tan culto sos", "aqua", Clase.NEUTRO,
+				(sv, pl, u) -> Trivia.preguntar(sv, us));
 		if (x < 480) return efecto(false);
 		if (x < 640) return burla(us, yo);
-		if (x < 680) return mensaje(us, yo);
-		if (x < 715) return frase(us);
-		if (x < 765) return susto();
+		if (x < 670) return mensaje(us, yo);
+		if (x < 705) return frase(us);
+		if (x < 745) return susto();
 		if (x < 830) return locura(p, us, yo);
 		if (x < 852) return item(us);
 		if (x < 864) return guisito(us);
@@ -249,10 +252,10 @@ public final class Premios {
 					paracaidas();
 				});
 			}
-			case 2 -> pr("castigo", "congelado", "¡CONGELADO!", "8 segundos sin moverte", "aqua", Clase.MALO, (sv, pl, u) -> {
-				cmd(sv, "effect give @p minecraft:slowness 8 6 true");
-				cmd(sv, "effect give @p minecraft:mining_fatigue 8 4 true");
-				Atributos.aplicar(sv, "minecraft:jump_strength", "sin_patas", -1, "add_multiplied_total", 8);
+			case 2 -> pr("castigo", "congelado", "¡CONGELADO!", "12 segundos sin moverte", "aqua", Clase.MALO, (sv, pl, u) -> {
+				cmd(sv, "effect give @p minecraft:slowness 12 6 true");
+				cmd(sv, "effect give @p minecraft:mining_fatigue 12 4 true");
+				Atributos.aplicar(sv, "minecraft:jump_strength", "sin_patas", -1, "add_multiplied_total", 12);
 				cmd(sv, "execute at @p run particle minecraft:snowflake ~ ~1 ~ 0.5 1 0.5 0.02 80 force");
 				cmd(sv, "execute at @p run playsound minecraft:block.glass.break master @p ~ ~ ~ 1 0.8");
 			});
@@ -284,7 +287,7 @@ public final class Premios {
 				for (int i = 0; i < 16; i++) Ruleta.despues(i * 22, s2 -> cmd(s2, "execute at @p run playsound minecraft:entity.warden.heartbeat master @p ~ ~ ~ 1 1"));
 			});
 			case 10 -> pr("castigo", "hambre", "¡HAMBRE VORAZ!", "la panza te ruge", "red", Clase.MALO, (sv, pl, u) -> {
-				cmd(sv, "effect give @p minecraft:hunger 6 60 true");
+				cmd(sv, "effect give @p minecraft:hunger 12 40 true");
 				cmd(sv, "execute at @p run playsound minecraft:entity.player.burp master @p ~ ~ ~ 1 0.5");
 			});
 			case 11 -> pr("castigo", "revuelto", "INVENTARIO REVUELTO", us + " te desordenó todo", "red", Clase.MALO, (sv, pl, u) -> {
@@ -315,7 +318,7 @@ public final class Premios {
 			});
 			case 17 -> pr("castigo", "murcielagos", "¡MURCIÉLAGOS!", "30 segundos de caos", "dark_gray", Clase.MALO, (sv, pl, u) -> lluvia(sv, "bat", "", 12, 600, false));
 			case 18 -> pr("castigo", "apagon", "APAGÓN", "no ves nada", "dark_gray", Clase.MALO, (sv, pl, u) -> {
-				cmd(sv, "effect give @p minecraft:blindness 10 0 true");
+				cmd(sv, "effect give @p minecraft:blindness 14 0 true");
 				Ruleta.despues(30, s2 -> cmd(s2, "execute as @p at @s positioned ^ ^ ^-2 run playsound minecraft:entity.zombie.ambient master @p ~ ~ ~ 1 0.8"));
 			});
 			case 19 -> pr("castigo", "lento", "MODO TORTUGA", "20 segundos", "red", Clase.MALO, (sv, pl, u) -> cmd(sv, "effect give @p minecraft:slowness 20 3 false"));
@@ -677,8 +680,93 @@ public final class Premios {
 	}
 
 	// =====================================================================
+	// MOB PARLANTE: un mob con el nombre del viewer que habla en el chat
+	// =====================================================================
+	private static final List<String[]> PARLANTES = List.of(
+			new String[] { "pig", "chancho", "" }, new String[] { "cow", "vaca", "" }, new String[] { "sheep", "oveja", "" },
+			new String[] { "chicken", "gallina", ",EggLayTime:2147483647" }, new String[] { "fox", "zorro", "" },
+			new String[] { "parrot", "loro", "" }, new String[] { "rabbit", "conejo", "" }, new String[] { "panda", "panda", "" },
+			new String[] { "frog", "rana", "" }, new String[] { "armadillo", "armadillo", "" }, new String[] { "villager", "aldeano", "" },
+			new String[] { "llama", "llama", "" },
+			new String[] { "zombie", "zombie", ZOMBIE }, new String[] { "skeleton", "esqueleto", "" },
+			new String[] { "spider", "araña", "" }, new String[] { "witch", "bruja", "" }, new String[] { "creeper", "creeper", "" });
+	private static final List<String> ES_HOSTIL = List.of("zombie", "skeleton", "spider", "witch", "creeper");
+
+	private static final List<String> SALUDOS = List.of("¡Hola %y! Soy %u y vine a molestarte", "Llegó %u, abran paso",
+			"Buenas, ¿acá es el stream de %y?", "Hola chat, hola %y, hola manco", "Me mandaron del chat a vigilarte",
+			"Tranqui %y, vengo en son de paz... creo");
+	private static final List<String> CHARLA = List.of("Qué linda casa... mentira, es horrible", "No me pegues, soy tu fan",
+			"Te estoy siguiendo...", "¿Me das un diamante?", "Pagué puntos para estar acá, tratame bien",
+			"Si me matás, el chat se entera", "Qué mal que minás, eh", "Ojo atrás tuyo... jaja mentira",
+			"Tengo hambre, ¿hay asado?", "¿Jugamos a la mancha? Vos la llevás", "Estoy re perdido", "Tu inventario es un quilombo",
+			"Esta noche duermo en tu cama", "Soy el mejor viewer del canal", "Saludos a todo el chat", "Te quiero mucho, %i",
+			"¿Esto es survival? No parece", "Yo lo hubiera hecho mejor", "Puto el que lee", "No sé nadar, no me lleves al agua",
+			"¿Dónde queda el Nether?", "Me aburro, hacé algo", "Vengo del futuro: morís en 5 minutos", "Soy un espía del chat",
+			"¿Me adoptás?", "Ese pico está re gastado", "Necesitás más antorchas, amigo", "Escuché un creeper...",
+			"Uy, ¿eso era lava?", "¡Corré %y, corré!", "No mires el chat", "Che %y, ¿y los diamantes?",
+			"Mi primo es un creeper, cuidado", "Me dijeron que sos %i, ¿es verdad?", "Hoy vine a ver cómo morís",
+			"Dale, construí algo lindo", "¿Por qué tenés tanta tierra?", "¿Quién te enseñó a jugar?", "Mirá cómo camino, re facha",
+			"Estoy tan cerca que te puedo oler", "¿Te bañaste? Olés a zombie", "Votá por mí para intendente del server",
+			"Un día voy a ser enderman", "%u para presidente", "No me dejes solo de noche",
+			"Te sigo hasta el fin del mundo... o del chunk", "Ay, me picó una araña", "¿Qué hora es? No tengo reloj",
+			"Me encanta tu skin, re original (no)", "Si me das pan te digo dónde hay diamantes", "Era mentira lo de los diamantes",
+			"Respetame que tengo nombre", "Shhh... escuchá...", "Qué noche tan linda para morir", "Cuidado que muerdo",
+			"Tirame un hueso, %y", "Soy el NPC más inteligente del server", "Esto es mejor que Netflix", "Jajaja qué %i",
+			"Mirá, una mariposa... ah no, era un phantom", "Hoy estás jugando como un %i", "¿Me sacás una foto?",
+			"Le voy a contar a todos que sos %i", "Mi abuela mina mejor que vos", "¿Ese es tu mejor equipo? Ay...",
+			"Bancame que me ato los cordones", "Quiero ser tu mascota, pero no te quiero", "Una vez le gané a un warden. Mentira",
+			"¿Por qué el cielo es cuadrado?", "Dejá de mirarme así", "¿Sabías que el chat te banca? Yo no",
+			"Te debo 2 diamantes desde 2019", "Eu, eu, ¿me escuchás?", "Mirá que soy importante, eh");
+	private static final List<String> DESPEDIDAS = List.of("Bueno, me voy. Chau %i", "Me aburriste, me voy",
+			"Me llama mi vieja, chau", "Nos vemos en el próximo canje", "Me voy a otro stream, chau",
+			"Fue un placer molestarte, %y", "Adiós, %i. Te voy a extrañar (no)");
+
+	private static Premio hablador(String us, String yo) {
+		String[] m = uno(PARLANTES);
+		boolean hostil = ES_HOSTIL.contains(m[0]);
+		return pr("hablador", m[0], "MOB PARLANTE", "un " + m[1] + " llamado " + us, "aqua", hostil ? Clase.HOSTIL : Clase.NEUTRO, (sv, pl, u) -> {
+			String marca = "krim_h" + System.nanoTime();
+			BlockPos pos = lugar((ServerLevel) pl.level(), pl, Lugar.SUELO);
+			String nbt = "{Tags:[\"" + Krim.TAG_RULETA + "\",\"" + marca + "\"]," + SIN + ",CustomNameVisible:1b,PersistenceRequired:1b,"
+					+ "CustomName:{text:\"" + us + "\",color:\"aqua\"}" + m[2] + "}";
+			cmd(sv, "execute as @p at @s run summon minecraft:" + m[0] + " " + (pos.getX() + 0.5) + " " + pos.getY() + " " + (pos.getZ() + 0.5) + " " + nbt);
+			cmd(sv, "execute at @e[tag=" + marca + "] run particle minecraft:large_smoke ~ ~0.5 ~ 0.4 0.6 0.4 0.02 20 force");
+			List<String> frases = new ArrayList<>(CHARLA);
+			Collections.shuffle(frases);
+			int n = entre(8, 12), t = 20;
+			decir(sv, marca, us, m[1], llenar(uno(SALUDOS), us, yo));
+			for (int i = 0; i < n; i++) {
+				t += entre(100, 170);
+				String f = llenar(frases.get(i), us, yo);
+				Ruleta.despues(t, s2 -> decir(s2, marca, us, m[1], f));
+			}
+			String chau = llenar(uno(DESPEDIDAS), us, yo);
+			Ruleta.despues(t + 120, s2 -> {
+				decir(s2, marca, us, m[1], chau);
+				if (!hostil) {
+					cmd(s2, "execute at @e[tag=" + marca + "] run particle minecraft:poof ~ ~0.5 ~ 0.4 0.5 0.4 0.05 20 force");
+					cmd(s2, "tp @e[tag=" + marca + "] ~ -1000 ~");
+					cmd(s2, "kill @e[tag=" + marca + "]");
+				}
+			});
+		});
+	}
+
+	private static String llenar(String f, String us, String yo) {
+		return f.replace("%u", us).replace("%y", yo).replace("%i", uno(INSULTOS));
+	}
+
+	/** El mob "habla": mensaje en el chat con formato de jugador, solo si sigue vivo. */
+	private static void decir(MinecraftServer s, String marca, String us, String especie, String f) {
+		cmd(s, "execute as @e[tag=" + marca + ",limit=1] run tellraw @a [{text:\"<\",color:\"white\"},{text:\"" + us + "\",color:\"aqua\"},"
+				+ "{text:\" (" + especie + ")\",color:\"gray\"},{text:\"> " + esc(f) + "\",color:\"white\"}]");
+		cmd(s, "execute at @e[tag=" + marca + ",limit=1] run particle minecraft:note ~ ~2.2 ~ 0 0 0 1 1 force");
+	}
+
+	// =====================================================================
 	// EFECTOS
 	// =====================================================================
+
 
 	private record Ef(String id, String nombre, int min, int max, int ampMax) {}
 
@@ -691,9 +779,9 @@ public final class Premios {
 
 	private static final List<Ef> MALOS = List.of(
 			new Ef("slowness", "Lentitud", 18, 30, 2), new Ef("mining_fatigue", "Fiaca minera", 18, 30, 1),
-			new Ef("nausea", "Mareo", 15, 25, 0), new Ef("blindness", "Ceguera", 8, 12, 0), new Ef("darkness", "Oscuridad", 15, 25, 0),
-			new Ef("hunger", "Hambre", 20, 30, 2), new Ef("weakness", "Debilidad", 20, 30, 1), new Ef("poison", "Veneno", 6, 10, 0),
-			new Ef("levitation", "Levitación", 3, 5, 0), new Ef("wither", "Marchitez", 4, 6, 0));
+			new Ef("nausea", "Mareo", 15, 25, 0), new Ef("blindness", "Ceguera", 10, 15, 0), new Ef("darkness", "Oscuridad", 15, 25, 0),
+			new Ef("hunger", "Hambre", 20, 30, 2), new Ef("weakness", "Debilidad", 20, 30, 1), new Ef("poison", "Veneno", 9, 14, 0),
+			new Ef("levitation", "Levitación", 4, 6, 0), new Ef("wither", "Marchitez", 7, 11, 0));
 
 	private static Premio efecto(boolean bueno) {
 		Ef e = uno(bueno ? BUENOS : MALOS);
@@ -878,7 +966,7 @@ public final class Premios {
 				"PÁNICO", "HAMBRE", "REVUELTO", "TNT", "HORDA", "EMBOSCADA", "CREEPERS", "MAPA", "PAPELITO", "LIBRO",
 				"PUTO EL Q LEE", "CHUPALA", "JACKPOT", "NADA", "DOBLE", "TAMAÑO", "DISCO", "HEROBRINE", "GALLINAS",
 				"GLOBO", "LUNAR", "MURCIÉLAGOS", "APAGÓN", "AL BORDE", "VEX", "PHANTOMS", "ANIMAL", "SUSTO", "MANCO",
-				"GUISITO", "RAMO", "GALLETA", "POESÍA", "FRASE"));
+				"GUISITO", "RAMO", "GALLETA", "POESÍA", "FRASE", "PREGUNTA", "PARLANTE", "TRIVIA"));
 		FALSAS = List.copyOf(l);
 	}
 

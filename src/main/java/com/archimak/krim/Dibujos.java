@@ -49,15 +49,34 @@ public final class Dibujos {
 		byte[] px = new byte[N * N];
 		int fondo = uno(FONDOS);
 		java.util.Arrays.fill(px, c(fondo));
+		String yo = p.getName().getString();
 		String tipo;
 		int x = r().nextInt(100);
-		if (x < 38) tipo = pene(px, fondo);
-		else if (x < 52) tipo = dedo(px);
-		else if (x < 64) tipo = caca(px);
-		else if (x < 80) tipo = textoGrande(px, fondo, usuario);
-		else if (x < 88) tipo = ele(px);
-		else if (x < 95) tipo = creeper(px);
-		else tipo = corazon(px);
+		// Insultantes (70)
+		if (x < 20) tipo = pene(px, fondo);
+		else if (x < 27) tipo = dedo(px);
+		else if (x < 34) tipo = caca(px);
+		else if (x < 43) tipo = textoGrande(px, fondo, usuario);
+		else if (x < 46) tipo = ele(px);
+		else if (x < 52) tipo = culo(px);
+		else if (x < 56) tipo = rata(px);
+		else if (x < 61) tipo = seBusca(px, yo);
+		else if (x < 66) tipo = tumba(px, yo);
+		else if (x < 70) tipo = carita(px, "payaso");
+		// Troll (18)
+		else if (x < 75) tipo = carita(px, "troll");
+		else if (x < 79) tipo = carita(px, "risa");
+		else if (x < 82) tipo = carita(px, "lengua");
+		else if (x < 85) tipo = diamanteFalso(px);
+		else if (x < 88) tipo = creeper(px);
+		// Lindos (12)
+		else if (x < 90) tipo = corazon(px);
+		else if (x < 92) tipo = carita(px, r().nextBoolean() ? "feliz" : "triste");
+		else if (x < 94) tipo = gato(px);
+		else if (x < 96) tipo = sol(px);
+		else if (x < 98) tipo = flor(px);
+		else if (x < 99) tipo = arcoiris(px);
+		else tipo = r().nextBoolean() ? estrella(px) : cerdito(px);
 		adornos(px, fondo);
 		if (r().nextInt(100) < 55) texto(px, "DE: " + usuario, 64, 3, 1, NEGRO, true);
 
@@ -210,6 +229,241 @@ public final class Dibujos {
 		}
 	}
 
+	// ------------------------------------------------------------------ caritas (feliz, triste, risa, lengua, troll, payaso)
+	private static String carita(byte[] px, String tipo) {
+		int cara = tipo.equals("payaso") ? BLANCO : uno(AMARILLO, AMARILLO, ORO, NARANJA);
+		if (tipo.equals("payaso")) {
+			int pelo = uno(ROJO, AZUL, VERDE, VIOLETA);
+			for (int i = 0; i < 6; i++) { circulo(px, 22 + (i % 2) * 6, 34 + i * 9, 11, NEGRO); circulo(px, 106 - (i % 2) * 6, 34 + i * 9, 11, NEGRO); }
+			for (int i = 0; i < 6; i++) { circulo(px, 22 + (i % 2) * 6, 34 + i * 9, 9, pelo); circulo(px, 106 - (i % 2) * 6, 34 + i * 9, 9, pelo); }
+		}
+		circulo(px, 64, 58, 46, NEGRO);
+		circulo(px, 64, 58, 43, cara);
+		switch (tipo) {
+			case "feliz" -> { ojos(px, 6); boca(px, true, 3); }
+			case "triste" -> { ojos(px, 6); boca(px, false, 3); lagrima(px, 44, 58); }
+			case "risa" -> {
+				linea(px, 40, 46, 48, 40, 3, NEGRO); linea(px, 48, 40, 56, 46, 3, NEGRO);
+				linea(px, 72, 46, 80, 40, 3, NEGRO); linea(px, 80, 40, 88, 46, 3, NEGRO);
+				for (int y = 64; y <= 84; y++) for (int x = 40; x <= 88; x++)
+					if (elipse(x - 64, y - 64, 24, 20) && y >= 64) px[x + y * N] = c(NEGRO);
+				elipse(px, 64, 80, 12, 5, ROJO);
+				lagrima(px, 30, 50); lagrima(px, 98, 50);
+			}
+			case "lengua" -> {
+				circulo(px, 48, 46, 6, NEGRO); linea(px, 72, 46, 86, 46, 3, NEGRO);
+				boca(px, true, 3);
+				elipse(px, 70, 82, 9, 11, NEGRO); elipse(px, 70, 82, 7, 9, ROSA); linea(px, 70, 76, 70, 88, 1, ROJO);
+			}
+			case "troll" -> {
+				linea(px, 36, 34, 56, 42, 3, NEGRO); linea(px, 72, 42, 92, 34, 3, NEGRO);
+				circulo(px, 48, 50, 5, NEGRO); circulo(px, 80, 50, 5, NEGRO);
+				for (int y = 62; y <= 92; y++) for (int x = 26; x <= 102; x++) {
+					double v = (y - 62) / 30.0, u = (x - 64) / 38.0;
+					if (u * u + v * v * 0.9 <= 1 && y >= 62) px[x + y * N] = c(NEGRO);
+					if (u * u * 1.15 + v * v * 1.1 <= 0.85 && y >= 65) px[x + y * N] = c(BLANCO);
+				}
+				for (int x = 34; x <= 94; x += 8) linea(px, x, 65, x, 88, 1, NEGRO);
+				linea(px, 30, 75, 98, 75, 1, NEGRO);
+			}
+			default -> { // payaso
+				ojos(px, 6);
+				circulo(px, 64, 64, 9, NEGRO); circulo(px, 64, 64, 7, ROJO);
+				boca(px, true, 5);
+			}
+		}
+		String t = switch (tipo) {
+			case "feliz" -> uno(List.of("SONREI", "QUE LINDO DIA", "TODO BIEN", "SOS UN SOL"));
+			case "triste" -> uno(List.of("ASI JUGAS", "TU CARA AL MORIR", "SAD", "F"));
+			case "risa" -> uno(List.of("JAJAJAJA", "ME MEO", "LOL", "XD"));
+			case "lengua" -> uno(List.of("NANANA", "BURLA", "TOMA", "JIJI"));
+			case "troll" -> uno(List.of("PROBLEM?", "TROLEADO", "U MAD?", "SKILL ISSUE"));
+			default -> uno(List.of("ESTE SOS VOS", "PAYASO", "QUE PAYASO", "CIRCO"));
+		};
+		texto(px, t, 64, 110, 2, NEGRO, true);
+		return "carita " + tipo;
+	}
+
+	private static void ojos(byte[] px, int r) { circulo(px, 48, 46, r, NEGRO); circulo(px, 80, 46, r, NEGRO); circulo(px, 46, 44, 2, BLANCO); circulo(px, 78, 44, 2, BLANCO); }
+
+	private static void boca(byte[] px, boolean feliz, int grosor) {
+		for (int x = 42; x <= 86; x++) {
+			double k = (x - 64) / 22.0;
+			int y = feliz ? (int) (68 + (1 - k * k) * 14) : (int) (84 - (1 - k * k) * 12);
+			rect(px, x, y, 1, grosor, NEGRO);
+		}
+	}
+
+	private static void lagrima(byte[] px, int x, int y) { circulo(px, x, y + 6, 4, AZUL); linea(px, x, y, x, y + 5, 3, AZUL); }
+
+	// ------------------------------------------------------------------ lindos
+	private static String gato(byte[] px) {
+		int pelo = uno(NARANJA, GRIS, MARRON, BLANCO);
+		poligono(px, new double[] { 30, 40, 54 }, new double[] { 54, 14, 36 }, NEGRO);
+		poligono(px, new double[] { 98, 88, 74 }, new double[] { 54, 14, 36 }, NEGRO);
+		poligono(px, new double[] { 34, 41, 51 }, new double[] { 50, 20, 37 }, pelo);
+		poligono(px, new double[] { 94, 87, 77 }, new double[] { 50, 20, 37 }, pelo);
+		elipse(px, 64, 62, 40, 34, NEGRO); elipse(px, 64, 62, 37, 31, pelo);
+		elipse(px, 48, 56, 7, 9, VERDE); elipse(px, 80, 56, 7, 9, VERDE);
+		rect(px, 47, 50, 2, 13, NEGRO); rect(px, 79, 50, 2, 13, NEGRO);
+		poligono(px, new double[] { 59, 69, 64 }, new double[] { 68, 68, 74 }, ROSA);
+		for (int i = -1; i <= 1; i++) { linea(px, 30, 72 + i * 5, 52, 72, 1, NEGRO); linea(px, 98, 72 + i * 5, 76, 72, 1, NEGRO); }
+		texto(px, uno(List.of("MIAU", "TE QUIERO", "UN GATITO", "PARA VOS", "MIAU MIAU")), 64, 108, 2, NEGRO, true);
+		return "gato";
+	}
+
+	private static String sol(byte[] px) {
+		for (int i = 0; i < 12; i++) {
+			double a = Math.toRadians(i * 30);
+			linea(px, 64 + Math.cos(a) * 34, 56 + Math.sin(a) * 34, 64 + Math.cos(a) * 52, 56 + Math.sin(a) * 52, 5, NARANJA);
+		}
+		circulo(px, 64, 56, 32, NEGRO); circulo(px, 64, 56, 29, AMARILLO);
+		circulo(px, 54, 50, 4, NEGRO); circulo(px, 74, 50, 4, NEGRO);
+		for (int x = 50; x <= 78; x++) { double k = (x - 64) / 14.0; rect(px, x, (int) (60 + (1 - k * k) * 8), 1, 2, NEGRO); }
+		texto(px, uno(List.of("QUE LINDO DIA", "BUEN DIA", "SOS LUZ", "BRILLA")), 64, 112, 2, NEGRO, true);
+		return "sol";
+	}
+
+	private static String flor(byte[] px) {
+		int petalo = uno(ROSA, ROJO, VIOLETA, CELESTE, MAGENTA, BLANCO);
+		linea(px, 64, 60, 64, 104, 4, VERDE);
+		elipse(px, 52, 86, 10, 5, VERDE); elipse(px, 76, 80, 10, 5, VERDE);
+		for (int i = 0; i < 6; i++) {
+			double a = Math.toRadians(i * 60);
+			circulo(px, (int) (64 + Math.cos(a) * 18), (int) (44 + Math.sin(a) * 18), 13, NEGRO);
+		}
+		for (int i = 0; i < 6; i++) {
+			double a = Math.toRadians(i * 60);
+			circulo(px, (int) (64 + Math.cos(a) * 18), (int) (44 + Math.sin(a) * 18), 11, petalo);
+		}
+		circulo(px, 64, 44, 10, NEGRO); circulo(px, 64, 44, 8, AMARILLO);
+		texto(px, uno(List.of("PARA VOS", "UNA FLOR", "CON AMOR", "TE LA MERECES")), 64, 112, 2, NEGRO, true);
+		return "flor";
+	}
+
+	private static String arcoiris(byte[] px) {
+		int[] cols = { ROJO, NARANJA, AMARILLO, VERDE, AZUL, VIOLETA };
+		for (int i = 0; i < cols.length; i++)
+			for (int y = 0; y <= 84; y++) for (int x = 0; x < N; x++) {
+				double d = Math.hypot(x - 64, y - 84);
+				if (d <= 56 - i * 6 && d > 50 - i * 6) px[x + y * N] = c(cols[i]);
+			}
+		for (int[] n : new int[][] { { 14, 84 }, { 114, 84 } }) {
+			circulo(px, n[0], n[1], 10, BLANCO); circulo(px, n[0] - 8, n[1] + 4, 7, BLANCO); circulo(px, n[0] + 8, n[1] + 4, 7, BLANCO);
+		}
+		boolean troll = r().nextInt(100) < 40;
+		texto(px, troll ? "TODO VA A ESTAR" : "TODO VA A ESTAR", 64, 98, 1, NEGRO, true);
+		texto(px, troll ? "MAL" : "BIEN", 64, 110, 2, troll ? ROJO : VERDE, true);
+		return "arcoiris";
+	}
+
+	private static String estrella(byte[] px) {
+		double[] xs = new double[10], ys = new double[10], xo = new double[10], yo = new double[10];
+		for (int i = 0; i < 10; i++) {
+			double a = Math.toRadians(-90 + i * 36), rr = i % 2 == 0 ? 46 : 19;
+			xs[i] = 64 + Math.cos(a) * rr; ys[i] = 54 + Math.sin(a) * rr;
+			xo[i] = 64 + Math.cos(a) * (rr + 4); yo[i] = 54 + Math.sin(a) * (rr + 4);
+		}
+		poligono(px, xo, yo, NEGRO);
+		poligono(px, xs, ys, ORO);
+		circulo(px, 56, 52, 3, NEGRO); circulo(px, 72, 52, 3, NEGRO);
+		boolean troll = r().nextBoolean();
+		texto(px, troll ? "ESTRELLADO" : "SOS UNA ESTRELLA", 64, 110, troll ? 2 : 1, NEGRO, true);
+		return "estrella";
+	}
+
+	private static String cerdito(byte[] px) {
+		poligono(px, new double[] { 34, 44, 52 }, new double[] { 40, 18, 34 }, NEGRO);
+		poligono(px, new double[] { 94, 84, 76 }, new double[] { 40, 18, 34 }, NEGRO);
+		poligono(px, new double[] { 37, 44, 49 }, new double[] { 38, 23, 34 }, ROSA);
+		poligono(px, new double[] { 91, 84, 79 }, new double[] { 38, 23, 34 }, ROSA);
+		circulo(px, 64, 60, 40, NEGRO); circulo(px, 64, 60, 37, ROSA);
+		elipse(px, 64, 70, 16, 11, NEGRO); elipse(px, 64, 70, 14, 9, MAGENTA);
+		elipse(px, 58, 70, 3, 4, NEGRO); elipse(px, 70, 70, 3, 4, NEGRO);
+		circulo(px, 50, 50, 4, NEGRO); circulo(px, 78, 50, 4, NEGRO);
+		texto(px, uno(List.of("OINK", "SOS VOS", "CHANCHITO", "TU CARA")), 64, 110, 2, NEGRO, true);
+		return "cerdito";
+	}
+
+	// ------------------------------------------------------------------ insultantes / troll
+	private static String tumba(byte[] px, String yo) {
+		rect(px, 0, 96, N, 32, VERDE);
+		rect(px, 30, 24, 68, 78, NEGRO);
+		circulo(px, 64, 30, 34, NEGRO);
+		rect(px, 33, 27, 62, 75, GRIS);
+		circulo(px, 64, 30, 31, GRIS);
+		rect(px, 0, 100, N, 28, VERDE);
+		texto(px, "RIP", 64, 26, 3, NEGRO, true);
+		texto(px, yo, 64, 54, 1, NEGRO, true);
+		texto(px, uno(List.of("MURIO", "MANCO", "QEPD", "F")), 64, 68, 2, NEGRO, true);
+		texto(px, uno(List.of("POR MANCO", "SKILL ISSUE", "NI LO VIO", "OTRA VEZ")), 64, 112, 1, NEGRO, true);
+		return "tumba";
+	}
+
+	private static String culo(byte[] px) {
+		int piel = uno(PIEL, ROSA, MARRON, ORO);
+		circulo(px, 44, 62, 30, NEGRO); circulo(px, 84, 62, 30, NEGRO);
+		circulo(px, 44, 62, 27, piel); circulo(px, 84, 62, 27, piel);
+		linea(px, 64, 40, 64, 88, 3, NEGRO);
+		if (r().nextBoolean()) { elipse(px, 36, 56, 6, 3, BLANCO); elipse(px, 76, 56, 6, 3, BLANCO); }
+		texto(px, uno(List.of("TU CARA", "ESTE SOS VOS", "AUTORRETRATO", "BESAME", "PARA VOS")), 64, 106, 2, NEGRO, true);
+		return "culo";
+	}
+
+	private static String rata(byte[] px) {
+		linea(px, 92, 76, 120, 60, 3, ROSA);
+		elipse(px, 70, 72, 30, 20, NEGRO); elipse(px, 70, 72, 27, 17, GRIS);
+		poligono(px, new double[] { 46, 20, 46 }, new double[] { 58, 72, 86 }, NEGRO);
+		poligono(px, new double[] { 46, 24, 46 }, new double[] { 61, 72, 83 }, GRIS);
+		circulo(px, 46, 54, 9, NEGRO); circulo(px, 46, 54, 7, ROSA);
+		circulo(px, 36, 68, 2, NEGRO); circulo(px, 20, 72, 3, ROSA);
+		texto(px, uno(List.of("RATA", "SOS VOS", "RATA COMUN", "TACAÑO")), 64, 106, 2, NEGRO, true);
+		return "rata";
+	}
+
+	private static String seBusca(byte[] px, String yo) {
+		java.util.Arrays.fill(px, c(ARENA));
+		rect(px, 4, 4, 120, 120, MARRON); rect(px, 7, 7, 114, 114, ARENA);
+		texto(px, "SE BUSCA", 64, 10, 2, NEGRO, true);
+		circulo(px, 64, 54, 22, NEGRO); circulo(px, 64, 54, 20, PIEL);
+		circulo(px, 57, 50, 3, NEGRO); circulo(px, 71, 50, 3, NEGRO);
+		rect(px, 56, 62, 16, 2, NEGRO);
+		texto(px, yo, 64, 82, 1, NEGRO, true);
+		texto(px, uno(List.of("POR MANCO", "POR NOOB", "POR GIL", "POR LENTO")), 64, 94, 1, ROJO, true);
+		texto(px, "RECOMPENSA: $0", 64, 108, 1, NEGRO, true);
+		return "se busca";
+	}
+
+	private static String diamanteFalso(byte[] px) {
+		poligono(px, new double[] { 64, 104, 64, 24 }, new double[] { 14, 50, 98, 50 }, NEGRO);
+		poligono(px, new double[] { 64, 98, 64, 30 }, new double[] { 20, 50, 92, 50 }, CELESTE);
+		poligono(px, new double[] { 64, 80, 64, 48 }, new double[] { 26, 50, 66, 50 }, BLANCO);
+		for (int i = -2; i <= 2; i++) linea(px, 28, 70 + i, 100, 40 + i, 1, ROJO);
+		texto(px, "FALSO", 64, 48, 3, ROJO, true);
+		texto(px, uno(List.of("CREISTE?", "JAJA", "NI EN SUEÑOS", "COMO TU SKILL")), 64, 110, 2, NEGRO, true);
+		return "diamante falso";
+	}
+
+	// ------------------------------------------------------------------ más primitivas
+	private static void linea(byte[] px, double x0, double y0, double x1, double y1, double grosor, int col) {
+		int minX = (int) Math.max(0, Math.min(x0, x1) - grosor), maxX = (int) Math.min(N - 1, Math.max(x0, x1) + grosor);
+		int minY = (int) Math.max(0, Math.min(y0, y1) - grosor), maxY = (int) Math.min(N - 1, Math.max(y0, y1) + grosor);
+		double dx = x1 - x0, dy = y1 - y0, len2 = dx * dx + dy * dy;
+		for (int y = minY; y <= maxY; y++) for (int x = minX; x <= maxX; x++) {
+			double t = len2 == 0 ? 0 : Math.max(0, Math.min(1, ((x - x0) * dx + (y - y0) * dy) / len2));
+			if (Math.hypot(x - (x0 + t * dx), y - (y0 + t * dy)) <= grosor / 2.0) px[x + y * N] = c(col);
+		}
+	}
+
+	private static void poligono(byte[] px, double[] xs, double[] ys, int col) {
+		for (int y = 0; y < N; y++) for (int x = 0; x < N; x++) {
+			boolean dentro = false;
+			for (int i = 0, j = xs.length - 1; i < xs.length; j = i++)
+				if ((ys[i] > y) != (ys[j] > y) && x < (xs[j] - xs[i]) * (y - ys[i]) / (ys[j] - ys[i]) + xs[i]) dentro = !dentro;
+			if (dentro) px[x + y * N] = c(col);
+		}
+	}
+
 	// ------------------------------------------------------------------ primitivas
 	private static boolean elipse(double u, double v, double rx, double ry) { return (u * u) / (rx * rx) + (v * v) / (ry * ry) <= 1; }
 
@@ -244,12 +498,13 @@ public final class Dibujos {
 				"711111000010001000100010000100001000", "801110100011000101110100011000101110", "901110100011000101111000010001001100",
 				"!00100001000010000100001000000000100", "?01110100010000100010001000000000100", ":00000001000010000000001000010000000",
 				".00000000000000000000000000011000110", "-00000000000000011111000000000000000", " 00000000000000000000000000000000000",
-				"(00010001000100001000010000010000010", ")01000001000001000010000100010001000", ",00000000000000000000001100010001000" };
+				"(00010001000100001000010000010000010", ")01000001000001000010000100010001000", ",00000000000000000000001100010001000",
+				"_00000000000000000000000000000011111", "$00100011111010001110001011111000100" };
 		for (String s : g) FUENTE.put(s.charAt(0), s.substring(1));
 	}
 
 	static String normalizar(String t) {
-		String s = Normalizer.normalize(t, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+		String s = Normalizer.normalize(t, Normalizer.Form.NFD).replaceAll("\\p{M}", "").replace("¡", "").replace("¿", "");
 		return s.toUpperCase(Locale.ROOT);
 	}
 

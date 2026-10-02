@@ -1,6 +1,7 @@
 package com.archimak.krim;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -21,9 +22,79 @@ public class KrimCliente implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("krim", "ruleta"), KrimCliente::dibujar);
+		// Abre la pantalla de la pregunta cuando el servidor la manda, y la cierra si se terminó el tiempo
+		ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+			TriviaEstado.Pregunta p = TriviaEstado.actual;
+			if (p != null && p.id() != preguntaAbierta && mc.player != null) {
+				preguntaAbierta = p.id();
+				pantalla = new PreguntaPantalla(p);
+				mc.gui.setScreen(pantalla);
+			}
+			// Se terminó el tiempo y la pantalla sigue abierta: se cierra sola
+			if (p == null && pantalla != null) {
+				if (!pantalla.respondida()) mc.gui.setScreen(null);
+				pantalla = null;
+			}
+		});
 	}
 
+	private static int preguntaAbierta = -1;
+	private static PreguntaPantalla pantalla;
+
 	private static void dibujar(GuiGraphicsExtractor g, DeltaTracker dt) {
+		dibujarRueda(g);
+		dibujarResultadoPregunta(g);
+	}
+
+	// ------------------------------------------------------------------ resultado de la pregunta
+	private static final String[] CACA = {
+			".......KK.......", "......KLBK......", ".....KBLBBK.....", ".....KBBBBK.....", "....KKBBBBKK....",
+			"...KBBLBBBBBK...", "...KBWWBBWWBK...", "..KBBWKBBWKBBK..", "..KBBBBBBBBBBK..", ".KBLBKBBBBKBBBK.",
+			".KBBBBKKKKBBBBK.", "KBBLBBBBBBBBBBBK", "KBBBBBBBBBBBBBBK", ".KKKKKKKKKKKKKK." };
+
+	private static void dibujarResultadoPregunta(GuiGraphicsExtractor g) {
+		TriviaEstado.Resultado r = TriviaEstado.resultado;
+		if (r == null) return;
+		long el = RuedaEstado.ahoraMs() - r.inicioMs();
+		if (el < 0 || el > 3200) return;
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.player == null) return;
+		Font font = mc.font;
+		int w = mc.getWindow().getGuiScaledWidth(), h = mc.getWindow().getGuiScaledHeight();
+		Matrix3x2fStack m = g.pose();
+		float esc = el < 250 ? rebote(el / 250f) : el > 2900 ? Math.max(0f, (3200 - el) / 300f) : 1f;
+		if (esc <= 0.01f) return;
+		m.pushMatrix();
+		m.translate(w / 2f, h / 2f - 10);
+		m.scale(esc, esc);
+		if (r.correcto()) {
+			// Rayos dorados girando detrás
+			m.pushMatrix();
+			m.rotate((float) Math.toRadians(el / 12.0));
+			for (int i = 0; i < 16; i++) rayo(g, m, i * 22.5f, 0, 70, (i % 2 == 0) ? 0x99FFC107 : 0x55FFF59D, 10);
+			m.popMatrix();
+			textoCentrado(g, m, font, "¡CORRECTO!", 2, -10, 3.2f, 0xFF1B5E20);
+			textoCentrado(g, m, font, "¡CORRECTO!", 0, -12, 3.2f, 0xFF76FF03);
+			textoCentrado(g, m, font, "el chat no lo puede creer", 0, 22, 1f, 0xFFFFFFFF);
+		} else {
+			int t = 7;
+			int ox = -8 * t, oy = -7 * t - 10;
+			for (int fy = 0; fy < CACA.length; fy++)
+				for (int fx = 0; fx < 16; fx++) {
+					char ch = CACA[fy].charAt(fx);
+					int col = switch (ch) {
+						case 'K' -> 0xFF2B1A0E; case 'B' -> 0xFF7B4A1E; case 'L' -> 0xFFA0672E; case 'W' -> 0xFFFFFFFF; default -> 0;
+					};
+					if (col != 0) g.fill(ox + fx * t, oy + fy * t, ox + fx * t + t, oy + fy * t + t, col);
+				}
+			textoCentrado(g, m, font, "INCORRECTO", 0, 50, 2.2f, 0xFFFF5252);
+			textoCentrado(g, m, font, "Era: " + r.respuestaCorrecta(), 0, 72, 1f, 0xFFDDDDDD);
+		}
+		m.popMatrix();
+	}
+
+	// ------------------------------------------------------------------ rueda
+	private static void dibujarRueda(GuiGraphicsExtractor g) {
 		RuedaEstado.Datos d = RuedaEstado.actual;
 		if (d == null) return;
 		Minecraft mc = Minecraft.getInstance();

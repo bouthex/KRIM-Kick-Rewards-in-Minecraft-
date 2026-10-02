@@ -114,7 +114,7 @@ public final class Ruleta {
 		}
 
 		if (!girando) {
-			if (COLA.isEmpty()) return;
+			if (COLA.isEmpty() || Trivia.activa()) return;
 			ServerPlayer p = jugador(s);
 			if (p == null) return;
 			empezar(s, p);

@@ -57,6 +57,7 @@ public class Krim implements ModInitializer {
 		});
 		Tamano.iniciar();
 		Ruleta.iniciar();
+		Trivia.iniciar();
 		ServidorHttp.iniciar(Config.puerto);
 	}
 
