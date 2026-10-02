@@ -8,7 +8,8 @@
 	"license": "MIT",
 	"environment": "*",
 	"entrypoints": {
-		"main": ["com.archimak.krim.Krim"]
+		"main": ["com.archimak.krim.Krim"],
+		"client": ["com.archimak.krim.KrimCliente"]
 	},
 	"mixins": ["krim.mixins.json"],
 	"depends": {
