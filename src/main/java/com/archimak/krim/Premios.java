@@ -544,7 +544,7 @@ public final class Premios {
 				cmd(sv, "tellraw @a {text:\"" + yo + como + us + "\"}");
 				Ruleta.despues(80, s2 -> cmd(s2, "tellraw @a {text:\"(mentira, sigue vivo... por ahora)\",color:\"gray\",italic:true}"));
 			});
-			case 4 -> pr("locura", "herobrine", "ALGUIEN ENTRÓ...", "mirá el chat del juego", "dark_gray", Clase.NEUTRO, (sv, pl, u) -> {
+			case 4 -> pr("locura", "herobrine", "???", "???", "dark_gray", Clase.NEUTRO, (sv, pl, u) -> {
 				cmd(sv, "tellraw @a {text:\"Herobrine se unió a la partida\",color:\"yellow\"}");
 				cmd(sv, "execute at @p run playsound minecraft:ambient.cave master @p ~ ~ ~ 1 0.6");
 				cmd(sv, "effect give @p minecraft:darkness 4 0 true");
@@ -759,7 +759,26 @@ public final class Premios {
 			"Le voy a contar a todos que sos %i", "Mi abuela mina mejor que vos", "¿Ese es tu mejor equipo? Ay...",
 			"Bancame que me ato los cordones", "Quiero ser tu mascota, pero no te quiero", "Una vez le gané a un warden. Mentira",
 			"¿Por qué el cielo es cuadrado?", "Dejá de mirarme así", "¿Sabías que el chat te banca? Yo no",
-			"Te debo 2 diamantes desde 2019", "Eu, eu, ¿me escuchás?", "Mirá que soy importante, eh");
+			"Te debo 2 diamantes desde 2019", "Eu, eu, ¿me escuchás?", "Mirá que soy importante, eh",
+			"¿Viste el partido ayer? Yo tampoco", "Me olvidé el cargador en tu casa", "¿Tenés WiFi? Pasame la clave",
+			"Che, ¿esto es Minecraft o Roblox?", "Mi mamá me dijo que no hable con mancos", "Vengo a cobrarte el alquiler",
+			"¿Me prestás tu cama? Es para un amigo", "Hoy estoy en modo Messi", "Dale que se enfría el mate",
+			"¿Quién se comió mi guisito?", "Estoy grabando todo para TikTok", "Sacame una foto con la lava atrás",
+			"Me dijeron que acá regalaban diamantes", "Me perdí buscando el Nether, ¿es por acá?", "No me mires que me pongo nervioso",
+			"Esto parece un capítulo de Los Simuladores", "¿Sabés cuál es el colmo de un creeper? Yo tampoco",
+			"Si ves a mi primo el zombie, decile que le debo plata", "Re linda la noche para perderse", "Tengo miedo de los pollos",
+			"Che, ¿por qué hay tanta lava acá?", "Yo antes era aldeano, ¿sabés?", "Hice un curso de minería online",
+			"¿Me das tu dirección para mandarte un creeper?", "Me encanta cómo decoraste... nada", "¿Esto es una casa o un pozo?",
+			"Me voy a quedar a vivir acá", "Jugás mejor con los ojos cerrados", "¿Querés que te enseñe a picar?",
+			"Ojo con el escalón... ah no, era un pozo", "Estoy esperando el colectivo", "¿Hay internet en el Nether?",
+			"¿Sabías que los creepers son verdes de envidia?", "Te doy un consejo: no hagas lo que hacés",
+			"Yo te banco igual, %i", "Mi sueño es ser jefe final", "Una vez vi un diamante. Era un vidrio",
+			"No toques ese botón... ¿qué botón? Ninguno", "Shhh, se escucha algo raro en la cueva",
+			"¿Cuántos corazones te quedan? Yo veo pocos", "¿Esa espada es de madera? Qué valiente",
+			"Te traje un regalo: mi compañía", "Me encanta el olor a pólvora a la mañana", "Quiero un autógrafo, %y",
+			"Me dijeron que este server es de bout, ¿es cierto?", "Contame un chiste, dale", "¿Te puedo seguir a todos lados? Gracias",
+			"¿Vos también escuchás música en la cabeza?", "Hoy es mi cumpleaños. Mentira. ¿Me regalás algo igual?",
+			"¿Sabías que un pollo puede ser jinete? Inquietante", "La próxima vez traé mate");
 	private static final List<String> DESPEDIDAS = List.of("Bueno, me voy. Chau %i", "Me aburriste, me voy",
 			"Me llama mi vieja, chau", "Nos vemos en el próximo canje", "Me voy a otro stream, chau",
 			"Fue un placer molestarte, %y", "Adiós, %i. Te voy a extrañar (no)");
@@ -774,9 +793,8 @@ public final class Premios {
 					+ "CustomName:{text:\"" + us + "\",color:\"aqua\"}" + m[2] + "}";
 			cmd(sv, "execute as @p at @s run summon minecraft:" + m[0] + " " + (pos.getX() + 0.5) + " " + pos.getY() + " " + (pos.getZ() + 0.5) + " " + nbt);
 			cmd(sv, "execute at @e[tag=" + marca + "] run particle minecraft:large_smoke ~ ~0.5 ~ 0.4 0.6 0.4 0.02 20 force");
-			List<String> frases = new ArrayList<>(CHARLA);
-			Collections.shuffle(frases);
 			int n = entre(8, 12), t = 20;
+			List<String> frases = frasesSinRepetir(n);
 			decir(sv, marca, us, m[1], llenar(uno(SALUDOS), us, yo));
 			for (int i = 0; i < n; i++) {
 				t += entre(100, 170);
@@ -795,6 +813,22 @@ public final class Premios {
 		});
 	}
 
+	/** Mazo de frases: se reparten todas antes de repetir alguna (aunque aparezcan varios mobs parlantes). */
+	private static final ArrayDeque<String> MAZO_CHARLA = new ArrayDeque<>();
+
+	private static List<String> frasesSinRepetir(int n) {
+		List<String> res = new ArrayList<>();
+		for (int i = 0; i < n; i++) {
+			if (MAZO_CHARLA.isEmpty()) {
+				List<String> todas = new ArrayList<>(CHARLA);
+				Collections.shuffle(todas);
+				MAZO_CHARLA.addAll(todas);
+			}
+			res.add(MAZO_CHARLA.poll());
+		}
+		return res;
+	}
+
 	private static String llenar(String f, String us, String yo) {
 		return f.replace("%u", us).replace("%y", yo).replace("%i", uno(INSULTOS));
 	}
@@ -809,13 +843,21 @@ public final class Premios {
 	// =====================================================================
 	// JEFES DE MENTIRA (sección negra que SÍ puede salir): malos, pero no tanto
 	// =====================================================================
+	/** Armadura completa de diamante o netherite + espada de oro: se ven OP, pero pegan como una espada de oro. */
+	private static String armaduraJefe(boolean conEspada) {
+		String m = r().nextBoolean() ? "diamond" : "netherite";
+		return ",equipment:{head:{id:\"minecraft:" + m + "_helmet\",count:1},chest:{id:\"minecraft:" + m + "_chestplate\",count:1},"
+				+ "legs:{id:\"minecraft:" + m + "_leggings\",count:1},feet:{id:\"minecraft:" + m + "_boots\",count:1}"
+				+ (conEspada ? ",mainhand:{id:\"minecraft:golden_sword\",count:1}" : "") + "}";
+	}
+
 	private static Premio jefe(String us) {
 		return switch (r().nextInt(4)) {
 			case 0 -> pr("jefe", "wardenbebe", "WARDEN BEBÉ", "tranqui, es chiquito", "dark_aqua", Clase.JEFE, (sv, pl, u) -> {
 				cmd(sv, "effect give @p minecraft:darkness 12 0 true");
 				cmd(sv, "execute at @p run playsound minecraft:entity.warden.emerge master @p ~ ~ ~ 1 1.3");
 				for (int i = 0; i < 6; i++) Ruleta.despues(20 + i * 20, s2 -> cmd(s2, "execute at @p run playsound minecraft:entity.warden.heartbeat master @p ~ ~ ~ 1 1.4"));
-				invocar(sv, lugar((ServerLevel) pl.level(), pl, Lugar.SUELO), "zombie", ZOMBIE + ",IsBaby:1b", "Warden", "dark_aqua");
+				invocar(sv, lugar((ServerLevel) pl.level(), pl, Lugar.SUELO), "zombie", ZOMBIE + ",IsBaby:1b" + armaduraJefe(true), "Warden", "dark_aqua");
 			});
 			case 1 -> pr("jefe", "dragontrucho", "DRAGÓN TRUCHO", "made in China", "dark_purple", Clase.JEFE, (sv, pl, u) -> {
 				cmd(sv, "execute at @p run playsound minecraft:entity.ender_dragon.growl master @p ~ ~ ~ 1 1.5");
@@ -825,13 +867,12 @@ public final class Premios {
 			case 2 -> pr("jefe", "withercarton", "WITHER DE CARTÓN", "hecho con cajas de " + us, "dark_gray", Clase.JEFE, (sv, pl, u) -> {
 				cmd(sv, "execute at @p run playsound minecraft:entity.wither.spawn master @p ~ ~ ~ 0.7 1.6");
 				cmd(sv, "effect give @p minecraft:wither 6 0 true");
-				invocar(sv, lugar((ServerLevel) pl.level(), pl, Lugar.SUELO), "wither_skeleton", "", "Wither", "dark_gray");
+				invocar(sv, lugar((ServerLevel) pl.level(), pl, Lugar.SUELO), "wither_skeleton", armaduraJefe(true), "Wither", "dark_gray");
 			});
-			default -> pr("jefe", "jefefinal", "JEFE FINAL", "40 de vida, suerte", "dark_red", Clase.JEFE, (sv, pl, u) -> {
+			default -> pr("jefe", "jefefinal", "JEFE FINAL", "armadura de lujo, espada de oro", "dark_red", Clase.JEFE, (sv, pl, u) -> {
 				cmd(sv, "execute at @p run playsound minecraft:event.raid.horn master @p ~ ~ ~ 1 1");
 				invocar(sv, lugar((ServerLevel) pl.level(), pl, Lugar.SUELO), "zombie",
-						ZOMBIE + ",Health:40f,attributes:[{id:\"minecraft:max_health\",base:40.0d}]"
-								+ ",equipment:{head:{id:\"minecraft:leather_helmet\",count:1},chest:{id:\"minecraft:leather_chestplate\",count:1}}",
+						ZOMBIE + ",Health:24f,attributes:[{id:\"minecraft:max_health\",base:24.0d}]" + armaduraJefe(true),
 						"JEFE FINAL de " + us, "dark_red");
 			});
 		};
@@ -853,9 +894,8 @@ public final class Premios {
 		if (x < 92) return pr("funny", "risas", "RISAS ENLATADAS", "el público se ríe de vos", "light_purple", Clase.FUNNY, (sv, pl, u) -> Funnys.risas(sv));
 		return pr("funny", "disco", "DISCO LOCO", us + " puso música", "light_purple", Clase.FUNNY, (sv, pl, u) -> {
 			String disco = uno(List.of("pigstep", "otherside", "cat", "chirp", "blocks", "creator", "relic", "precipice"));
-			cmd(sv, "execute at @p run playsound minecraft:music_disc." + disco + " record @p ~ ~ ~ 1 1");
+			Funnys.musica(sv, "music_disc." + disco, 600);
 			for (int i = 0; i < 60; i++) Ruleta.despues(i * 10, s2 -> cmd(s2, "execute at @p run particle minecraft:note ~ ~2.2 ~ 1.5 0.5 1.5 1 3 force"));
-			Ruleta.despues(600, s2 -> cmd(s2, "stopsound @p record"));
 		});
 	}
 
@@ -1068,7 +1108,7 @@ public final class Premios {
 		for (String t : List.of("JACKPOT", "CURACIÓN", "ANIMAL", "GALLETITAS", "ANTORCHAS", "HIERRO", "SUPERSALTO")) l.add(new Falsa(t, 0));
 		for (String t : List.of("MAPA", "PAPELITO", "LIBRO", "PUTO EL Q LEE", "NADA", "DOBLE", "TAMAÑO", "DISCO", "HEROBRINE",
 				"GALLINAS", "GLOBO", "LUNAR", "GUISITO", "RAMO", "GALLETA", "POESÍA", "FRASE", "PREGUNTA", "PARLANTE",
-				"MENSAJE", "TNT FALSA", "GIRÁ OTRA VEZ")) l.add(new Falsa(t, 1));
+				"MENSAJE", "TNT FALSA", "GIRÁ OTRA VEZ", "???")) l.add(new Falsa(t, 1));
 		for (String t : List.of("EDIT TIKTOK", "CRÉDITOS", "SIN LUZ", "CÁMARA LENTA", "JUMPSCARE", "RISAS", "DISCO LOCO")) l.add(new Falsa(t, 4));
 		FALSAS = List.copyOf(l);
 	}

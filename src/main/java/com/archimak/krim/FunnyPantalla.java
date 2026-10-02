@@ -109,17 +109,22 @@ public class FunnyPantalla extends Screen {
 	private void creditos(GuiGraphicsExtractor g, long el) {
 		int w = this.width, h = this.height;
 		g.fill(0, 0, w, h, 0xFF000000);
-		float vel = (h + e.lineas().length * 14f) / (e.duracionMs() - 1500f);
-		float y0 = h - el * vel;
-		for (int i = 0; i < e.lineas().length; i++) {
+		int alto = 16;
+		int n = e.lineas().length;
+		// Sube parejo de abajo hacia arriba; la última línea termina en el centro de la pantalla
+		float recorrido = h + (n - 1) * alto - h / 2f;
+		float t = Math.min(1f, el / (float) (e.duracionMs() - 1200));
+		float y0 = h - recorrido * t;
+		for (int i = 0; i < n; i++) {
 			String l = e.lineas()[i];
 			if (l.isEmpty()) continue;
-			float y = y0 + i * 14;
-			if (y < -20 || y > h + 20) continue;
-			boolean titulo = i == 0 || l.equals("¿FIN?");
-			boolean rol = i + 1 < e.lineas().length && !e.lineas()[i + 1].isEmpty() && (i == 0 || e.lineas()[i - 1].isEmpty());
-			int col = titulo ? 0xFFFFD54F : rol ? 0xFF9E9E9E : 0xFFFFFFFF;
-			textoBorde(g, l, w / 2f, y, titulo ? 2f : 1.1f, col);
+			float y = y0 + i * alto;
+			if (y < -24 || y > h + 24) continue;
+			boolean grande = i == 0 || i == 2 || i == n - 1;
+			boolean rol = !grande && i + 1 < n && !e.lineas()[i + 1].isEmpty() && e.lineas()[i - 1].isEmpty();
+			int col = grande ? 0xFFFFD54F : rol ? 0xFF9E9E9E : 0xFFFFFFFF;
+			float esc = grande ? Math.min(2f, (w * 0.9f) / Math.max(1, this.font.width(l))) : 1.15f;
+			textoBorde(g, l, w / 2f, y, esc, col);
 		}
 	}
 

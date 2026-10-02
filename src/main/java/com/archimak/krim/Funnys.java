@@ -53,6 +53,15 @@ public final class Funnys {
 		Ruleta.despues(ticks, sv -> cmd(sv, "tick unfreeze"));
 	}
 
+	/**
+	 * Música que te sigue: volumen mínimo 1 (se escucha igual aunque te muevas, no queda "clavada" en un lugar)
+	 * y se corta en TODOS los canales al terminar (antes se cortaba en otro canal y seguía sonando: bug 2.8.2).
+	 */
+	static void musica(MinecraftServer s, String sonido, int ticks) {
+		cmd(s, "execute at @p run playsound minecraft:" + sonido + " record @p ~ ~ ~ 1 1 1");
+		Ruleta.despues(ticks, sv -> cmd(sv, "stopsound @a * minecraft:" + sonido));
+	}
+
 	private static void sonar(MinecraftServer s, String sonido, double volumen, double tono) {
 		cmd(s, "execute at @p run playsound minecraft:" + sonido + " master @p ~ ~ ~ " + volumen + " " + tono);
 	}
@@ -122,7 +131,7 @@ public final class Funnys {
 		int[] g = new int[durMs / beat];
 		for (int i = 0; i < g.length; i++) g[i] = i * beat;
 		cmd(s, "execute at @p run playsound " + sonido + " master @p ~ ~ ~ 1 1");
-		Ruleta.despues(Config.phonkSegundos * 20, sv -> cmd(sv, "stopsound @p master " + sonido));
+		Ruleta.despues(Config.phonkSegundos * 20, sv -> cmd(sv, "stopsound @a * " + sonido));
 		FunnyEstado.actual = new FunnyEstado.Efecto(++contador, "edit", RuedaEstado.ahoraMs(), durMs, cap,
 				"edit de " + us, "♪ phonk " + n, g, new String[0], r().nextInt(3));
 		congelar(s, Config.phonkSegundos * 20);
@@ -131,19 +140,81 @@ public final class Funnys {
 
 	private static boolean contiene(int[] a, int v) { for (int x : a) if (x == v) return true; return false; }
 
-	// ------------------------------------------------------------------ créditos finales
+	// ------------------------------------------------------------------ créditos finales (aleatorios)
+	private static final List<String> NOMBRES = List.of("clover", "hani", "archimak", "bout", "kaki", "elio", "bruno", "amilcar",
+			"tarta", "celes", "sofi", "ibai", "el chat", "un creeper", "Steve", "Alex", "Herobrine", "un aldeano", "la abuela",
+			"el perro del vecino", "un zombie bebé", "el enderman", "una gallina", "el warden (de lejos)", "un piglin",
+			"el phantom", "la vaca", "un esqueleto sin arco", "el loro", "un ajolote", "el gato", "la cabra que grita",
+			"el tío que no vino", "el de sistemas", "tu ex", "el kiosquero", "el remisero", "un tipo random",
+			"el que canjeó (%u)");
+	private static final List<String> PRESENTA = List.of("BOUT PRESENTA", "KICK PRESENTA", "UNA PRODUCCIÓN DE %n",
+			"%n PRESENTA", "EL CHAT PRESENTA", "BOUT FILMS PRESENTA", "KICK STUDIOS PRESENTA", "UNA PELÍCULA DE %u",
+			"PRODUCCIONES %N", "%u Y EL CHAT PRESENTAN");
+	private static final List<String> TITULOS = List.of("EL MANCO", "RÁPIDO Y MANCO", "LA VENGANZA DEL CREEPER",
+			"MI POBRE ANGELITO 4: SOLO EN EL NETHER", "EL SEÑOR DE LOS PICOS", "BOUT: LA PELÍCULA", "MISIÓN: NO MORIR",
+			"TODO TODO EN TODOS LOS CHUNKS", "LA CASA DE TIERRA", "EL PADRINO DEL SERVER", "RELATOS SALVAJES (EN MINECRAFT)",
+			"VOLVER AL SPAWN", "EL ÚLTIMO DIAMANTE", "PIRATAS DEL CARIBE: EL COFRE VACÍO", "TITANIC 2: SE HUNDIÓ EN LAVA",
+			"HARRY POTTER Y EL GUISITO DE LA ABUELA", "STAR WARS: EL ENDERMAN CONTRAATACA", "EL CONJURO DE LA RULETA");
+	private static final List<String> ROLES = List.of("Protagonista", "Actor de reparto", "Dirección", "Guion",
+			"Dirección de fotografía", "Efectos especiales", "Catering", "Vestuario", "Maquillaje", "Doble de riesgo",
+			"Doble de cuerpo", "Música original", "Sonido", "Producción ejecutiva", "Coreografía", "Asesor legal",
+			"Asesor de moda", "Peluquería", "Iluminación", "Montaje", "Casting", "Seguridad", "Limpieza del set",
+			"Chofer", "Psicólogo del elenco", "Entrenador de creepers", "Domador de gallinas", "Responsable de las explosiones",
+			"Inventor de la ruleta", "Contador de muertes", "Encargado de la lava", "Experto en manquear",
+			"Proveedor de antorchas", "Testigo de todo", "Víctima principal", "Mejor amigo del villano",
+			"El que no hizo nada", "El que llegó tarde", "Fan número 1", "Hater número 1");
+	private static final List<String> CHISTES = List.of("Ningún animal fue lastimado (bueno, alguno sí)",
+			"Filmado íntegramente en un mundo de tierra", "Ningún diamante fue encontrado durante el rodaje",
+			"Presupuesto total: 3 esmeraldas y un pan", "Basado en hechos reales (lamentablemente)",
+			"El protagonista murió 14 veces durante el rodaje", "Las escenas de acción NO fueron hechas por un profesional",
+			"Ningún creeper fue pagado por su actuación", "El guisito de la abuela no tenía nada raro (mentira)",
+			"Todos los personajes son ficticios. Menos el manco", "Rodado sin dormir ni una noche",
+			"Se usaron 0 antorchas. Por eso todo estaba oscuro", "El aldeano cobró más que el protagonista",
+			"La gallina pidió aparecer en los créditos", "Ninguna cama explotó... en el Overworld",
+			"Gracias a mamá por bancar el stream", "Gracias al chat por los puntos", "Gracias a nadie, en realidad",
+			"Dedicado a todos los que murieron por un creeper", "Esta película no tiene escena post-créditos. O sí");
+	private static final List<String> FINALES = List.of("¿FIN?", "FIN", "CONTINUARÁ...", "NO HAY SEGUNDA PARTE", "FIN (POR AHORA)",
+			"VOLVEMOS DESPUÉS DE ESTOS MENSAJES", "¿Y ESO FUE TODO?", "GRACIAS POR NADA", "FIN. ANDÁ A DORMIR");
+
 	static void creditos(MinecraftServer s, String us, String yo) {
-		String[] lineas = {
-				"KRIM PRESENTA", "", "Una película de " + us, "", "Protagonista", yo + " (el manco)", "",
-				"Actor de reparto", "Un creeper con nombre", "", "Dirección de fotografía", "El chat", "",
-				"Efectos especiales", "La ruleta", "", "Catering", "El guisito de la abuela", "",
-				"Ningún animal fue lastimado", "(bueno, alguno sí)", "", "Gracias por mirar", "", "", "¿FIN?" };
-		FunnyEstado.actual = new FunnyEstado.Efecto(++contador, "creditos", RuedaEstado.ahoraMs(), 11000, "", "", "",
+		List<String> nombres = new ArrayList<>();
+		for (String n : NOMBRES) nombres.add(n.replace("%u", us));
+		java.util.Collections.shuffle(nombres);
+		List<String> roles = new ArrayList<>(ROLES);
+		java.util.Collections.shuffle(roles);
+		List<String> chistes = new ArrayList<>(CHISTES);
+		java.util.Collections.shuffle(chistes);
+
+		String quien = nombres.get(r().nextInt(nombres.size()));
+		List<String> l = new ArrayList<>();
+		l.add(PRESENTA.get(r().nextInt(PRESENTA.size())).replace("%n", quien).replace("%N", quien.toUpperCase()).replace("%u", us));
+		l.add("");
+		l.add("«" + TITULOS.get(r().nextInt(TITULOS.size())) + "»");
+		l.add(""); l.add("");
+		l.add("Protagonista"); l.add(yo + " (" + uno(List.of("el manco", "el de siempre", "a su pesar", "sin saberlo", "en su peor momento")) + ")");
+		l.add("");
+		int k = 0;
+		for (int i = 0; i < 16; i++) {
+			String rol = roles.get(i);
+			if (rol.equals("Protagonista")) continue;
+			l.add(rol);
+			l.add(nombres.get(k++ % nombres.size()));
+			if (r().nextInt(4) == 0) l.add(nombres.get(k++ % nombres.size()));
+			l.add("");
+			if (i % 5 == 4) { l.add(chistes.get(i / 5)); l.add(""); }
+		}
+		l.add(chistes.get(4)); l.add(""); l.add(chistes.get(5)); l.add(""); l.add("");
+		l.add("Gracias por mirar"); l.add(""); l.add(""); l.add(FINALES.get(r().nextInt(FINALES.size())));
+		String[] lineas = l.toArray(new String[0]);
+		int durMs = 20000;
+		FunnyEstado.actual = new FunnyEstado.Efecto(++contador, "creditos", RuedaEstado.ahoraMs(), durMs, "", "", "",
 				new int[0], lineas, 0);
-		sonar(s, "music_disc.far", 1, 1);
-		Ruleta.despues(220, sv -> cmd(sv, "stopsound @p record"));
-		congelar(s, 220);
+		String tema = uno(List.of("music_disc.far", "music_disc.strad", "music_disc.mellohi", "music_disc.wait", "music_disc.chirp"));
+		musica(s, tema, durMs / 50);
+		congelar(s, durMs / 50);
 	}
+
+	private static String uno(List<String> l) { return l.get(r().nextInt(l.size())); }
 
 	// ------------------------------------------------------------------ se cortó la luz
 	static void apagon(MinecraftServer s, String us) {
