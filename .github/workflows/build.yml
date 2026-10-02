@@ -10,9 +10,39 @@ jobs:
         with:
           java-version: '25'
           distribution: 'microsoft'
+
+      # Phonks: los audios de la carpeta "phonks" del repo se convierten a .ogg y se meten adentro del mod.
+      # Para que arranque en el drop, agregá @minuto-segundo al nombre:  Murder In My Mind@0-42.mp3
+      - name: Preparar phonks
+        shell: bash
+        run: |
+          DEST=src/main/resources/assets/krim/sounds/phonk
+          mkdir -p "$DEST"
+          if [ -d phonks ]; then
+            command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg)
+            n=0
+            echo "{" > src/main/resources/assets/krim/sounds.json
+            while IFS= read -r -d '' f; do
+              n=$((n+1)); [ $n -gt 30 ] && break
+              base=$(basename "$f"); desde=0
+              if [[ "$base" == *@* ]]; then
+                t="${base##*@}"; t="${t%.*}"; m="${t%%-*}"; s="${t##*-}"
+                desde=$((10#$m*60 + 10#$s))
+              fi
+              ffmpeg -loglevel error -y -ss "$desde" -t 15 -i "$f" -vn -ac 2 -ar 44100 -c:a libvorbis -q:a 4 "$DEST/phonk$n.ogg"
+              [ $n -gt 1 ] && echo "," >> src/main/resources/assets/krim/sounds.json
+              echo "\"phonk$n\": {\"sounds\": [{\"name\": \"krim:phonk/phonk$n\", \"stream\": true}]}" >> src/main/resources/assets/krim/sounds.json
+              echo "phonk$n <- $base (desde ${desde}s)"
+            done < <(find phonks -maxdepth 1 -type f \( -iname '*.mp3' -o -iname '*.ogg' -o -iname '*.wav' -o -iname '*.m4a' -o -iname '*.opus' -o -iname '*.webm' \) -print0 | sort -z)
+            echo "}" >> src/main/resources/assets/krim/sounds.json
+            echo "Phonks metidos en el mod: $n"
+          else
+            echo "No hay carpeta phonks: el edit usa el phonk de bloques musicales"
+          fi
+
       - run: chmod +x ./gradlew
       - run: ./gradlew build
       - uses: actions/upload-artifact@v7
         with:
-          name: kickcreeper-jar
+          name: krim-jar
           path: build/libs/
