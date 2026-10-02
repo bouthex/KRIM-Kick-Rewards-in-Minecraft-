@@ -5,78 +5,150 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Bardeos al que canjeó: frases fijas + plantillas que se combinan (miles de variantes).
- * Puteadas fuertes de barrio. Lo único que no se usa: insultos por discapacidad, orientación u origen.
+ * WACHÍN: bardeos al que canjeó. Lista curada a mano, puteadas fuertes y bardo sexual.
+ * Lo único que no se usa: insultos por discapacidad, orientación u origen.
  * No repite ninguno de los últimos 40.
  */
 public final class Bardeos {
-	private static final List<String> FIJOS = List.of(
-			"%u es un pelotudo de mierda", "%u es un forro de primera", "%u es un sorete con patas", "%u, andá a cagar",
-			"%u tiene un palo metido en el orto", "%u es más inútil que un cenicero en una moto", "%u es un boludo atómico",
-			"la concha de tu madre, %u", "%u es tan forro que lo echaron del grupo de la familia", "%u, sos un desperdicio de oxígeno",
-			"%u es un pajero de mierda y lo sabe todo el chat", "%u juega como el orto y encima canjea", "%u, chupame un huevo",
-			"%u es un hijo de puta con suerte de mierda", "%u, sos tan feo que tu vieja te daba la teta de espaldas",
-			"%u es un cagón que llora con los creepers", "%u es el error más grande de sus viejos", "%u tiene el cerebro de un sorete seco",
-			"%u, tomatela y no vuelvas", "%u es un rata que no regala ni la hora", "%u es un salame de mierda con WiFi",
-			"%u nació por una apuesta perdida", "%u es tan pelotudo que se perdió en un pasillo", "%u, metete los puntos en el orto",
-			"%u es un forro que pide permiso para respirar", "%u tiene menos luces que un pozo de mina", "%u es la cagada del barrio",
-			"a %u lo parieron por el orto y se nota", "%u es un mamerto de manual", "%u, sos el hijo que nadie pidió",
-			"%u es un gil de goma", "%u huele a culo de zombie", "%u es un tarado con micrófono", "%u es más pajero que un mono en un zoológico",
-			"%u, ojalá te explote un creeper en la jeta", "%u es un forro y su perro también", "%u es tan inútil que el creeper le tuvo lástima",
-			"%u es un pelotudo con premio", "%u se caga encima cuando oscurece", "%u, sos un sorete flotando en la pileta del chat",
-			"%u tiene la personalidad de un ladrillo mojado", "%u es un boludo profesional con título", "%u es la vergüenza de su árbol genealógico",
-			"%u, ni tu vieja te banca", "%u es un forrazo de proporciones bíblicas", "%u es un pelotudo que se cree vivo",
-			"%u canjeó esto con la plata del almuerzo, pobre gil", "%u, cerrá el orto un rato", "%u tiene la cara de un culo con bigote",
-			"%u es un mocoso de mierda con ínfulas", "%u es más malo que pisar un Lego descalzo", "%u, chupala", "%u es un pancho sin salchicha",
-			"%u es un pelotudo nivel dios", "%u es un forro que aplaude cuando aterriza el avión", "a %u le chupa un huevo todo y se le nota en la cara",
-			"%u se chupa los dedos después de rascarse el culo", "%u es un sorete de dos patas y medio cerebro", "%u, sos una cagada envuelta en papel de regalo",
-			"%u es tan pelotudo que le pegó a un creeper con la mano", "%u, la próxima canjeá un poco de dignidad", "%u es un hijo de puta pero hijo de puta",
-			"%u es un boludo con más suerte que habilidad", "%u se tira pedos y se los huele orgulloso", "%u tiene olor a pata desde 2015",
-			"%u, ni el warden te quiere escuchar", "%u es un forro de los que ya no se fabrican");
-
-	private static final List<String> ADJ = List.of("pelotudo", "forro", "boludo", "inútil", "pajero", "cagón", "sorete",
-			"tarado", "gil", "salame", "rata", "manco", "llorón", "chupamedias", "mamerto", "pancho", "otario", "garca", "pesado", "feo");
-	private static final List<String> COMP = List.of("un sorete en una pileta", "la concha de la lora", "un perro con dos colas",
-			"un creeper sin pólvora", "un lunes a la mañana",
-			"el WiFi de la abuela", "una gallina en el Nether", "un zombie bebé", "un aldeano desempleado", "un colectivo en hora pico",
-			"el chiste de un tío", "una cama en el Nether", "un pico de madera", "un esqueleto sin arco", "un enderman bajo la lluvia",
-			"un caracol con resaca", "una fila en el banco");
-	private static final List<String> ACCION = List.of("intentó domar un creeper", "se metió a nadar en lava", "quiso tradear con un zombie",
-			"se puso a minar para abajo", "le pegó a un golem de hierro", "trató de dormir de día", "se olvidó dónde dejó su casa",
-			"quiso hacer un portal con tierra", "le tiró un huevo a un warden", "se comió una papa venenosa a propósito",
-			"saltó al vacío del End", "le robó la cama a un aldeano", "se peleó con una abeja", "construyó una casa de arena sin techo",
-			"siguió a un enderman a casa", "le prendió fuego a su propia casa", "se tiró de un árbol para ver qué pasaba",
-			"le quiso poner montura a una gallina");
-	private static final List<String> CONSEC = List.of("y todavía no entiende qué pasó", "y lo publicó en sus historias",
-			"y se lo contó orgulloso a la familia", "y lloró en vivo", "y le echó la culpa al chat", "y dijo que era estrategia",
-			"y lo volvería a hacer", "y perdió todo el inventario", "y ahora vive en un pozo", "y el creeper se rió de él",
-			"y se fue a dormir enojado", "y pidió ayuda a la abuela", "y lo filmó en vertical", "y desde ese día no es el mismo",
-			"y se cree un genio", "y pidió un reembolso al chat", "y se lo cuenta a todos en el asado", "y lo puso en su CV",
-			"el muy pelotudo", "como el forro que es", "y encima se hace el vivo", "porque es un boludo de nacimiento");
-	private static final List<String> COSA = List.of("un palo", "un pico de madera", "un cactus", "una antorcha", "un creeper chiquito",
-			"un bloque de tierra", "una caña de pescar", "un pan entero", "una espada de oro", "un balde de lava", "una pala");
-	private static final List<String> LUGAR = List.of("en el orto", "en la cola", "en el culo");
-	private static final List<String> REMATE = List.of("y no se lo saca ni con tótem", "y dice que es un accesorio",
-			"y lo usa de antena para el WiFi", "y anda sonriendo igual", "y le cobra entrada a los que miran", "desde 2017",
-			"y no le molesta", "y lo pide en cada cumpleaños", "y lo muestra en las juntadas", "y le puso nombre",
-			"y dice que es por salud", "y lo heredó del abuelo");
+	private static final List<String> BARDEOS = List.of(
+			"%u es un pelotudo de mierda",
+			"%u es un forro hijo de puta",
+			"La concha de tu madre, %u",
+			"%u, sos tan feo que tu vieja te daba la teta de espaldas",
+			"A %u lo parieron por el orto y se nota",
+			"%u es un hijo de puta pero hijo de puta",
+			"%u, metete los puntos en el orto",
+			"%u tiene un palo metido en el orto",
+			"%u es un sorete con patas",
+			"%u es tan virgen que el aceite de oliva le pide consejos",
+			"%u la tiene tan chiquita que usa pinza para mear",
+			"%u es tan pajero que tiene callos en las dos manos",
+			"A %u ni la mano le da bola",
+			"%u, ni pagando ponés",
+			"%u es más pajero que un mono en un zoológico",
+			"%u tiene la cara de un culo con bigote",
+			"%u es un desperdicio de leche",
+			"%u es la prueba de que el forro falló",
+			"%u, sos el hijo que nadie pidió",
+			"%u es el error más grande de sus viejos",
+			"%u es tan feo que la cigüeña lo tiró de cabeza",
+			"%u tiene menos levante que un ladrillo",
+			"%u le manda audios de 5 minutos a la ex",
+			"La ex de %u lo dejó por un aldeano",
+			"%u se la come doblada",
+			"%u chupa más que una aspiradora",
+			"%u, chupame un huevo",
+			"%u, chupala",
+			"%u, andá a cagar",
+			"%u, tomatela y no vuelvas",
+			"%u, cerrá el orto un rato",
+			"%u, ojalá te explote un creeper en la jeta",
+			"%u es un forrazo de proporciones bíblicas",
+			"%u es tan pelotudo que se perdió en un pasillo",
+			"%u es un cagón que llora con los creepers",
+			"%u se caga encima cuando oscurece",
+			"%u huele a culo de zombie",
+			"%u se tira pedos y se los huele orgulloso",
+			"%u se chupa los dedos después de rascarse el culo",
+			"%u es un rata que no regala ni la hora",
+			"%u canjeó esto con la plata del almuerzo, pobre gil",
+			"%u, ni tu vieja te banca",
+			"%u es la vergüenza de su árbol genealógico",
+			"%u nació por una apuesta perdida",
+			"%u, sos un desperdicio de oxígeno",
+			"%u es un forro que aplaude cuando aterriza el avión",
+			"%u es tan inútil que el creeper le tuvo lástima",
+			"%u tiene el cerebro de un sorete seco",
+			"%u es un mamerto de manual",
+			"%u, sos una cagada envuelta en papel de regalo",
+			"%u es un boludo con más suerte que habilidad",
+			"%u tiene la personalidad de un ladrillo mojado",
+			"%u es un hijo de puta con suerte de mierda",
+			"%u se pajea pensando en la gallina de Minecraft",
+			"%u se enamoró de una vaca y la vaca lo clavó en visto",
+			"%u, tu viejo fue a comprar cigarrillos por tu culpa",
+			"%u es tan feo que su espejo pidió licencia",
+			"%u tiene más cuernos que un ciervo",
+			"A la novia de %u la conoce todo el barrio",
+			"%u es tan gil que pagó puntos por esto",
+			"%u la tiene como un pico de madera: no sirve para nada",
+			"%u la tiene más corta que su paciencia",
+			"%u es la razón por la que existen los forros",
+			"%u es un garca que vende el alma por dos esmeraldas",
+			"%u huele a pata, a culo y a fracaso",
+			"%u tiene olor a huevo podrido",
+			"%u es un pelotudo nivel dios",
+			"%u es un forro y su perro también",
+			"%u se pajea con los créditos de la ruleta",
+			"%u besó a un creeper y le explotó la boca",
+			"%u da asco hasta a los zombies",
+			"%u es tan rata que se lleva las servilletas del McDonald's",
+			"%u es un chupamedias del chat",
+			"%u, sos tan malo que el tutorial te bardea",
+			"%u es un caso perdido y encima feo",
+			"%u tiene más granos que una pizza de muzzarella",
+			"%u tiene la vida sexual de un esqueleto: puro hueso y nada de carne",
+			"%u ni con la ruleta ponía",
+			"%u es un pajero compulsivo con WiFi",
+			"%u, te coge hasta el lag",
+			"%u es tan cornudo que lo confunden con una cabra",
+			"%u tiene cara de pajearse con guantes",
+			"%u se baña con agua bendita a ver si se le va lo pelotudo",
+			"%u es un sorete flotando en la pileta del chat",
+			"%u nació sin cerebro y lo devolvieron",
+			"A %u lo cagaron a trompadas hasta los aldeanos",
+			"%u, sos tan forro que hasta tu sombra te evita",
+			"%u vende fotos de pies y nadie compra",
+			"La vieja de %u también canjea la ruleta. Para pedir perdón",
+			"%u, sos la mancha de la familia",
+			"%u se come los mocos y convida",
+			"%u tiene la billetera más vacía que la cabeza",
+			"%u se cree facha y es un sorete con gorra",
+			"%u es el mejor argumento para no tener hijos",
+			"%u tiene el sex appeal de un zombie ahogado",
+			"%u es tan feo que el enderman se teletransportó para no verlo",
+			"%u la chupa por un pan",
+			"%u es tan pelotudo que le hizo una casa a un creeper",
+			"Hasta el warden, que es ciego, ve que %u es un forro",
+			"%u es un gil que se cree el protagonista",
+			"%u, sos tan aburrido que el chat se fue a otro stream",
+			"%u se hace el misterioso pero es un pelotudo",
+			"%u tiene menos onda que una cama en el Nether",
+			"%u debería estar en un museo: el de los fracasos",
+			"%u, chupame la mandarina",
+			"%u, andá a lavarte el orto con agua de zanja",
+			"%u es tan virgen que hasta la Virgen le tiene lástima",
+			"%u, tu existencia es un error de redondeo",
+			"%u es la cagada que se escapó del inodoro",
+			"%u es un hijo de mil putas con buena conexión",
+			"%u, sos tan rata que hasta las ratas te bardean",
+			"%u, metete el pico en el orto y picá",
+			"%u tiene más fracasos que muertes por creeper",
+			"%u es forro de nacimiento, criado con amor",
+			"%u, si fueras más pelotudo tendrías récord Guinness",
+			"%u la tiene tan chica que la cámara no la encuentra ni con zoom",
+			"%u se garcha a la almohada y la almohada se queja",
+			"%u, tu vieja es tan gorda que tiene su propio bioma",
+			"%u, tu vieja es más vieja que el bloque de tierra",
+			"%u es un pajero profesional: nivel diamante",
+			"%u se tira a la pileta y la pileta se vacía de asco",
+			"A %u lo garcharon en el Monopoly",
+			"%u tiene más deudas que pelos en el culo",
+			"%u es tan feo que cuando nació el doctor le pegó a la vieja",
+			"%u, tus viejos te quieren, pero no tanto",
+			"%u es un forro con complejo de Dios",
+			"%u debería pedir perdón por existir. Dos veces",
+			"%u le dice 'mi amor' a la mano",
+			"%u se la pasa mirando el chat porque nadie le habla en la vida real",
+			"%u, chupame la pija de madera");
 
 	private static final ArrayDeque<String> RECIENTES = new ArrayDeque<>();
 
-	private static ThreadLocalRandom r() { return ThreadLocalRandom.current(); }
-	private static String uno(List<String> l) { return l.get(r().nextInt(l.size())); }
-
-	/** Un bardeo nuevo para el usuario (no repite los últimos 40). */
+	/** Un bardeo para el usuario (no repite los últimos 40). */
 	static String generar(String usuario) {
-		String b = "";
-		for (int i = 0; i < 20; i++) {
-			int x = r().nextInt(100);
-			if (x < 45) b = uno(FIJOS);
-			else if (x < 65) b = uno(List.of("%u es más ", "%u, sos más ", "la puta madre, %u es más ")) + uno(ADJ) + " que " + uno(COMP);
-			else if (x < 85) b = "%u " + uno(ACCION) + " " + uno(CONSEC);
-			else b = "%u tiene " + uno(COSA) + " metido " + uno(LUGAR) + " " + uno(REMATE);
-			if (!RECIENTES.contains(b)) break;
-		}
+		ThreadLocalRandom r = ThreadLocalRandom.current();
+		String b = BARDEOS.get(r.nextInt(BARDEOS.size()));
+		for (int i = 0; i < 30 && RECIENTES.contains(b); i++) b = BARDEOS.get(r.nextInt(BARDEOS.size()));
 		RECIENTES.addLast(b);
 		while (RECIENTES.size() > 40) RECIENTES.removeFirst();
 		String t = b.replace("%u", usuario);
