@@ -53,6 +53,7 @@ public final class ServidorHttp {
 		String destino = partes[1];
 		int q = destino.indexOf('?');
 		String ruta = q >= 0 ? destino.substring(0, q) : destino;
+		try { ruta = URLDecoder.decode(ruta, StandardCharsets.UTF_8); } catch (IllegalArgumentException ignored) { }
 		Map<String, String> params = q >= 0 ? parsear(destino.substring(q + 1)) : new HashMap<>();
 
 		switch (ruta) {
@@ -84,6 +85,11 @@ public final class ServidorHttp {
 						(s, p) -> Mascota.crear(s, p, tipo, n, usuario));
 				responder(c, ok ? 200 : 503, ok ? "ok" : "no hay ningun mundo abierto");
 			}
+			case "/tamano", "/tamaño" -> {
+				String usuario = usuario(params);
+				boolean ok = Krim.encolar("tamano", "usuario=\"" + usuario + "\"", (s, p) -> Tamano.aplicar(s, p, usuario));
+				responder(c, ok ? 200 : 503, ok ? "ok" : "no hay ningun mundo abierto");
+			}
 			case "/estado" -> responder(c, 200,
 					"KRIM " + Krim.VERSION + "\n"
 					+ "Minecraft " + Krim.VERSION_MC + "\n"
@@ -91,7 +97,7 @@ public final class ServidorHttp {
 					+ "Canjes recibidos en esta sesion: " + Krim.PEDIDOS.get() + "\n"
 					+ "Explosiones de creepers del chat: " + Krim.EXPLOSIONES.get() + "\n"
 					+ "Puerto: " + Config.puerto + "\n");
-			case "/" -> responder(c, 200, "KRIM activo. Rutas: /creeper /cartel /mascota /estado");
+			case "/" -> responder(c, 200, "KRIM activo. Rutas: /creeper /cartel /mascota /tamano /estado");
 			default -> {
 				Registro.aviso("HTTP", "Ruta desconocida: " + ruta);
 				responder(c, 404, "no existe");

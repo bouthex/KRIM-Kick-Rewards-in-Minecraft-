@@ -51,6 +51,7 @@ public class Krim implements ModInitializer {
 			servidor = null;
 			Registro.info("MUNDO", "Mundo cerrado");
 		});
+		Tamano.iniciar();
 		ServidorHttp.iniciar(Config.puerto);
 	}
 
