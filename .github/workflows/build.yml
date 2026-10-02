@@ -29,7 +29,11 @@ jobs:
                 t="${base##*@}"; t="${t%.*}"; m="${t%%-*}"; s="${t##*-}"
                 desde=$((10#$m*60 + 10#$s))
               fi
-              ffmpeg -loglevel error -y -ss "$desde" -t 15 -i "$f" -vn -ac 2 -ar 44100 -c:a libvorbis -q:a 4 "$DEST/phonk$n.ogg"
+              # -nostdin: sin esto ffmpeg se come la lista de archivos del bucle (error E-005)
+              if ! ffmpeg -nostdin -loglevel error -y -ss "$desde" -t 15 -i "$f" -vn -ac 2 -ar 44100 -c:a libvorbis -q:a 4 "$DEST/phonk$n.ogg"; then
+                echo "AVISO: no se pudo convertir $base, se saltea"
+                rm -f "$DEST/phonk$n.ogg"; n=$((n-1)); continue
+              fi
               [ $n -gt 1 ] && echo "," >> src/main/resources/assets/krim/sounds.json
               echo "\"phonk$n\": {\"sounds\": [{\"name\": \"krim:phonk/phonk$n\", \"stream\": true}]}" >> src/main/resources/assets/krim/sounds.json
               echo "phonk$n <- $base (desde ${desde}s)"
