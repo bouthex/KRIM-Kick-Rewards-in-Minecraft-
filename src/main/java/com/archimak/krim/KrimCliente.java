@@ -34,7 +34,7 @@ public class KrimCliente implements ClientModInitializer {
 		Font font = mc.font;
 		int w = mc.getWindow().getGuiScaledWidth();
 		int h = mc.getWindow().getGuiScaledHeight();
-		float radio = Math.max(40f, Math.min(72f, h * 0.30f));
+		float radio = Math.max(50f, Math.min(100f, h * 0.38f));
 		float cx = w / 2f, cy = h / 2f - 8f;
 
 		// Escala: entra con rebote y sale achicándose
@@ -79,7 +79,8 @@ public class KrimCliente implements ClientModInitializer {
 			m.pushMatrix();
 			m.rotate((float) Math.toRadians(i * ancho + ancho / 2));
 			m.translate(radio * 0.60f, 0);
-			float s = font.width(et) > 52 ? 52f / font.width(et) * 0.75f : 0.75f;
+			float lugar = radio * 0.62f; // largo disponible del sector para el texto
+			float s = Math.min(0.95f, lugar / Math.max(1, font.width(et)));
 			m.scale(s, s);
 			int col = (frenada && i == d.ganador()) ? 0xFF000000 : 0xFFFFFFFF;
 			g.text(font, et, -font.width(et) / 2, -4, col, !(frenada && i == d.ganador()));
@@ -98,10 +99,11 @@ public class KrimCliente implements ClientModInitializer {
 		}
 
 		// Centro
-		disco(g, m, 15, 0xFF3E2723, 6f, 4);
-		disco(g, m, 13, 0xFFFFC107, 6f, 4);
-		disco(g, m, 10, 0xFFB71C1C, 6f, 4);
-		textoCentrado(g, m, font, "KRIM", 0, -3, 0.6f, 0xFFFFFFFF);
+		float hub = radio / 72f;
+		disco(g, m, 15 * hub, 0xFF3E2723, 6f, 4);
+		disco(g, m, 13 * hub, 0xFFFFC107, 6f, 4);
+		disco(g, m, 10 * hub, 0xFFB71C1C, 6f, 4);
+		textoCentrado(g, m, font, "KRIM", 0, -3 * hub, 0.6f * hub, 0xFFFFFFFF);
 
 		// Puntero rojo arriba, apuntando hacia abajo
 		int top = Math.round(-radio - 13);

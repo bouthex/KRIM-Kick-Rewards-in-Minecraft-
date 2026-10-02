@@ -165,6 +165,14 @@ public final class Ruleta {
 			usadas.add(e);
 			etiquetas[i] = e;
 		}
+		// Carnada: a veces aparece WARDEN, DRAGÓN o WITHER en la rueda (muchas veces pegado al ganador
+		// para que "casi" salga). Es puro baiteo: el catálogo no los tiene, así que nunca pueden salir.
+		if (r.nextInt(100) < 75) {
+			int lado = r.nextBoolean() ? 1 : -1;
+			int pos = r.nextInt(100) < 65 ? Math.floorMod(ganador + lado, RuedaEstado.SECTORES)
+					: Math.floorMod(ganador + r.nextInt(2, RuedaEstado.SECTORES - 1), RuedaEstado.SECTORES);
+			if (pos != ganador) etiquetas[pos] = List.of("WARDEN", "DRAGÓN", "WITHER").get(r.nextInt(3));
+		}
 		float ancho = 360f / RuedaEstado.SECTORES;
 		float base = ((255f - ganador * ancho) % 360f + 360f) % 360f;
 		float jitter = (float) r.nextDouble(-ancho * 0.35, ancho * 0.35);
