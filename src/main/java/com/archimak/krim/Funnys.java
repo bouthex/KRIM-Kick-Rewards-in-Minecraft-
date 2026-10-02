@@ -239,16 +239,16 @@ public final class Funnys {
 		else sonar(s, "entity.warden.roar", 1, 1.3);
 	}
 
-	// ------------------------------------------------------------------ bardeo gigante al que canjeó
-	static void bardeo(MinecraftServer s, String us) {
+	// ------------------------------------------------------------------ WACHÍN: bardeo gigante al que canjeó
+	static void wachin(MinecraftServer s, String us) {
 		String b = Bardeos.generar(us);
-		FunnyEstado.actual = new FunnyEstado.Efecto(++contador, "bardeo", RuedaEstado.ahoraMs(), 6500, b, "— el chat", "",
+		FunnyEstado.actual = new FunnyEstado.Efecto(++contador, "wachin", RuedaEstado.ahoraMs(), 6500, b, "— el chat", "",
 				new int[0], new String[0], r().nextInt(3));
 		sonar(s, "block.anvil.land", 1, 0.6);
 		sonar(s, "entity.villager.no", 1, 0.8);
 		Ruleta.despues(8, sv -> sonar(sv, "entity.witch.celebrate", 1, 1.0));
-		cmd(s, "tellraw @a [{text:\"BARDEO: \",color:\"light_purple\",bold:true},{text:\"" + b.replace("\"", "'") + "\",color:\"white\"}]");
-		Registro.info("FUNNY", "Bardeo: " + b);
+		cmd(s, "tellraw @a [{text:\"WACHÍN: \",color:\"light_purple\",bold:true},{text:\"" + b.replace("\"", "'") + "\",color:\"white\"}]");
+		Registro.info("FUNNY", "Wachín: " + b);
 	}
 
 	// ------------------------------------------------------------------ cámara lenta

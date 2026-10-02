@@ -34,7 +34,8 @@ public class FunnyPantalla extends Screen {
 		switch (e.tipo()) {
 			case "edit" -> edit(g, el);
 			case "creditos" -> creditos(g, el);
-			default -> apagon(g, el);
+			case "apagon" -> apagon(g, el);
+			default -> { } // cualquier otro tipo no se dibuja acá
 		}
 	}
 
@@ -131,6 +132,7 @@ public class FunnyPantalla extends Screen {
 	// ------------------------------------------------------------------ apagón
 	private void apagon(GuiGraphicsExtractor g, long el) {
 		int w = this.width, h = this.height;
+		if (e.lineas().length < 2) { g.fill(0, 0, w, h, 0xFF000000); return; }
 		if (el < 4200) {
 			g.fill(0, 0, w, h, 0xFF000000);
 			if (el > 1500) textoBorde(g, e.lineas()[0], w / 2f, h / 2f, 1f, 0xFF616161);

@@ -44,7 +44,9 @@ public class KrimCliente implements ClientModInitializer {
 			}
 			// Funnys que congelan la pantalla (edit, créditos, apagón)
 			FunnyEstado.Efecto f = FunnyEstado.actual;
-			if (f != null && f.id() != funnyAbierto && mc.player != null && !f.tipo().equals("jumpscare")) {
+			// Solo estos tres usan pantalla; jumpscare y wachín se dibujan en el HUD (E-006)
+			boolean conPantalla = f != null && (f.tipo().equals("edit") || f.tipo().equals("creditos") || f.tipo().equals("apagon"));
+			if (conPantalla && f.id() != funnyAbierto && mc.player != null) {
 				funnyAbierto = f.id();
 				funny = new FunnyPantalla(f);
 				mc.gui.setScreen(funny);
@@ -66,13 +68,13 @@ public class KrimCliente implements ClientModInitializer {
 		dibujarRueda(g);
 		dibujarResultadoPregunta(g);
 		dibujarJumpscare(g);
-		dibujarBardeo(g);
+		dibujarWachin(g);
 	}
 
-	// ------------------------------------------------------------------ bardeo gigante
-	private static void dibujarBardeo(GuiGraphicsExtractor g) {
+	// ------------------------------------------------------------------ wachín: bardeo gigante
+	private static void dibujarWachin(GuiGraphicsExtractor g) {
 		FunnyEstado.Efecto f = FunnyEstado.actual;
-		if (f == null || !f.tipo().equals("bardeo")) return;
+		if (f == null || !f.tipo().equals("wachin")) return;
 		long el = RuedaEstado.ahoraMs() - f.inicioMs();
 		if (el < 0 || el > f.duracionMs()) return;
 		Minecraft mc = Minecraft.getInstance();
