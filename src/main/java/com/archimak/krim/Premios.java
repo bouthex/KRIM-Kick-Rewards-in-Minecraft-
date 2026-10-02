@@ -100,7 +100,7 @@ public final class Premios {
 			java.util.Map.entry("edit", "funny:edit"), java.util.Map.entry("creditos", "funny:creditos"),
 			java.util.Map.entry("apagon", "funny:apagon"), java.util.Map.entry("lenta", "funny:lenta"),
 			java.util.Map.entry("jumpscare", "funny:jumpscare"), java.util.Map.entry("risas", "funny:risas"),
-			java.util.Map.entry("disco", "funny:disco"), java.util.Map.entry("funny", "funny:"),
+			java.util.Map.entry("disco", "funny:disco"), java.util.Map.entry("funny", "funny:"), java.util.Map.entry("bardeo", "funny:bardeo"),
 			java.util.Map.entry("warden", "jefe:wardenbebe"), java.util.Map.entry("dragon", "jefe:dragontrucho"),
 			java.util.Map.entry("wither", "jefe:withercarton"), java.util.Map.entry("jefefinal", "jefe:jefefinal"),
 			java.util.Map.entry("jefe", "jefe:"), java.util.Map.entry("pregunta", "trivia:"),
@@ -119,7 +119,7 @@ public final class Premios {
 		String yo = p.getName().getString();
 		for (int i = 0; i < 300; i++) {
 			Premio x = switch (prefijo.substring(0, prefijo.indexOf(':'))) {
-				case "funny" -> funny(us, yo);
+				case "funny" -> que.equals("bardeo") ? pr("funny", "bardeo", "BARDEO", "para " + us, "light_purple", Clase.FUNNY, (sv, pl, u) -> Funnys.bardeo(sv, us)) : funny(us, yo);
 				case "jefe" -> jefe(us);
 				case "trivia" -> pr("trivia", "pregunta", "¡PREGUNTA!", "a ver qué tan culto sos", "aqua", Clase.NEUTRO, (sv, pl, u) -> Trivia.preguntar(sv, us));
 				case "hablador" -> hablador(us, yo);
@@ -157,7 +157,8 @@ public final class Premios {
 		if (x < 450) return pr("trivia", "pregunta" + r().nextInt(4), "¡PREGUNTA!", "a ver qué tan culto sos", "aqua", Clase.NEUTRO,
 				(sv, pl, u) -> Trivia.preguntar(sv, us));
 		if (x < 480) return efecto(false);
-		if (x < 620) return burla(us, yo);
+		if (x < 595) return burla(us, yo);
+		if (x < 620) return pr("funny", "bardeo" + r().nextInt(1000), "BARDEO", "para " + us, "light_purple", Clase.FUNNY, (sv, pl, u) -> Funnys.bardeo(sv, us));
 		if (x < 645) return mensaje(us, yo);
 		if (x < 680) return frase(us);
 		if (x < 695) return castigo(p, us, yo);
@@ -890,7 +891,10 @@ public final class Premios {
 		if (x < 64) return pr("funny", "apagon", "SE CORTÓ LA LUZ", "gentileza de Edesur", "light_purple", Clase.FUNNY,
 				(sv, pl, u) -> Funnys.apagon(sv, us));
 		if (x < 74) return pr("funny", "lenta", "CÁMARA LENTA", "modo película", "light_purple", Clase.FUNNY, (sv, pl, u) -> Funnys.lenta(sv));
-		if (x < 84) return pr("funny", "jumpscare", "JUMPSCARE", "no mires...", "light_purple", Clase.FUNNY, (sv, pl, u) -> Funnys.jumpscare(sv));
+		// El jumpscare se disfraza de algo lindo (verde) para que nadie se lo espere
+		if (x < 84) return pr("funny", "jumpscare", uno(List.of("UN GATITO", "REGALITO", "ABRAZO DEL CHAT", "PREMIO SORPRESA",
+				"PERRITO TIERNO", "FLORCITA", "???", "ALGO LINDO", "PREMIO MAYOR")), uno(List.of("awww", "algo lindo para vos", "mirá de cerca...")),
+				"green", Clase.BUENO, (sv, pl, u) -> Funnys.jumpscare(sv));
 		if (x < 92) return pr("funny", "risas", "RISAS ENLATADAS", "el público se ríe de vos", "light_purple", Clase.FUNNY, (sv, pl, u) -> Funnys.risas(sv));
 		return pr("funny", "disco", "DISCO LOCO", us + " puso música", "light_purple", Clase.FUNNY, (sv, pl, u) -> {
 			String disco = uno(List.of("pigstep", "otherside", "cat", "chirp", "blocks", "creator", "relic", "precipice"));
@@ -1109,7 +1113,8 @@ public final class Premios {
 		for (String t : List.of("MAPA", "PAPELITO", "LIBRO", "PUTO EL Q LEE", "NADA", "DOBLE", "TAMAÑO", "DISCO", "HEROBRINE",
 				"GALLINAS", "GLOBO", "LUNAR", "GUISITO", "RAMO", "GALLETA", "POESÍA", "FRASE", "PREGUNTA", "PARLANTE",
 				"MENSAJE", "TNT FALSA", "GIRÁ OTRA VEZ", "???")) l.add(new Falsa(t, 1));
-		for (String t : List.of("EDIT TIKTOK", "CRÉDITOS", "SIN LUZ", "CÁMARA LENTA", "JUMPSCARE", "RISAS", "DISCO LOCO")) l.add(new Falsa(t, 4));
+		for (String t : List.of("EDIT TIKTOK", "CRÉDITOS", "SIN LUZ", "CÁMARA LENTA", "RISAS", "DISCO LOCO", "BARDEO")) l.add(new Falsa(t, 4));
+		for (String t : List.of("UN GATITO", "REGALITO", "PERRITO TIERNO", "FLORCITA", "ALGO LINDO")) l.add(new Falsa(t, 0));
 		FALSAS = List.copyOf(l);
 	}
 

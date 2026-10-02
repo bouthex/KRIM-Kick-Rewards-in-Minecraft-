@@ -66,10 +66,101 @@ public class KrimCliente implements ClientModInitializer {
 		dibujarRueda(g);
 		dibujarResultadoPregunta(g);
 		dibujarJumpscare(g);
+		dibujarBardeo(g);
+	}
+
+	// ------------------------------------------------------------------ bardeo gigante
+	private static void dibujarBardeo(GuiGraphicsExtractor g) {
+		FunnyEstado.Efecto f = FunnyEstado.actual;
+		if (f == null || !f.tipo().equals("bardeo")) return;
+		long el = RuedaEstado.ahoraMs() - f.inicioMs();
+		if (el < 0 || el > f.duracionMs()) return;
+		Minecraft mc = Minecraft.getInstance();
+		Font font = mc.font;
+		int w = mc.getWindow().getGuiScaledWidth(), h = mc.getWindow().getGuiScaledHeight();
+		float alfa = el < 200 ? el / 200f : el > f.duracionMs() - 400 ? (f.duracionMs() - el) / 400f : 1f;
+		g.fill(0, 0, w, h, ((int) (150 * alfa) << 24));
+		// palabras repartidas en renglones que entren en el 90% del ancho, con la escala más grande posible
+		String[] palabras = f.titulo().toUpperCase().split(" ");
+		float esc = 3.2f;
+		java.util.List<String> lineas = new java.util.ArrayList<>();
+		while (esc > 1.2f) {
+			lineas.clear();
+			StringBuilder l = new StringBuilder();
+			for (String p : palabras) {
+				String prueba = l.length() == 0 ? p : l + " " + p;
+				if (font.width(prueba) * esc > w * 0.9f && l.length() > 0) { lineas.add(l.toString()); l = new StringBuilder(p); }
+				else l = new StringBuilder(prueba);
+			}
+			lineas.add(l.toString());
+			if (lineas.size() * 11 * esc < h * 0.6f) break;
+			esc -= 0.2f;
+		}
+		java.util.concurrent.ThreadLocalRandom r = java.util.concurrent.ThreadLocalRandom.current();
+		Matrix3x2fStack m = g.pose();
+		float entrada = el < 250 ? rebote(el / 250f) : 1f;
+		int[] colores = { 0xFFFF5252, 0xFFFFEB3B, 0xFFFF80AB };
+		float y = h / 2f - lineas.size() * 11 * esc / 2f;
+		for (int i = 0; i < lineas.size(); i++) {
+			String l = lineas.get(i);
+			int sx = el < 1200 ? r.nextInt(-2, 3) : 0;
+			m.pushMatrix();
+			m.translate(w / 2f + sx, y + i * 11 * esc);
+			m.scale(esc * entrada, esc * entrada);
+			int x0 = -font.width(l) / 2;
+			g.text(font, l, x0 - 1, 0, 0xFF000000, false);
+			g.text(font, l, x0 + 1, 0, 0xFF000000, false);
+			g.text(font, l, x0, -1, 0xFF000000, false);
+			g.text(font, l, x0, 1, 0xFF000000, false);
+			g.text(font, l, x0, 0, colores[(f.variante() + i) % colores.length], false);
+			m.popMatrix();
+		}
+		m.pushMatrix();
+		m.translate(w / 2f, y + lineas.size() * 11 * esc + 6);
+		m.scale(1.3f, 1.3f);
+		g.text(font, f.sub(), -font.width(f.sub()) / 2, 0, 0xFFE0E0E0, true);
+		m.popMatrix();
 	}
 
 	// ------------------------------------------------------------------ jumpscare: cara de creeper a pantalla completa
 	private static final String[] CREEPER = { "........", ".KK..KK.", ".KK..KK.", "...KK...", "..KKKK..", "..KKKK..", "..K..K..", "........" };
+
+	/**
+	 * Cara de terror propia (no es ninguna foto): piel pálida, ojos negros enormes y una boca
+	 * con sonrisa macabra (sonrisa = true) o abierta gritando. Parpadea en negativo para asustar más.
+	 */
+	private static void caraTerror(GuiGraphicsExtractor g, int w, int h, int sx, int sy, boolean sonrisa, long el) {
+		boolean negativo = (el / 90) % 4 == 1;
+		g.fill(0, 0, w, h, negativo ? 0xFFF0F0F0 : 0xFF050505);
+		int celdas = 48;
+		int t = Math.max(2, Math.round(Math.max(w, h) * 1.05f / celdas));
+		int ox = (w - celdas * t) / 2 + sx, oy = (h - celdas * t) / 2 + sy;
+		for (int y = 0; y < celdas; y++)
+			for (int x = 0; x < celdas; x++) {
+				double u = (x + 0.5 - 24) / 24.0, v = (y + 0.5 - 24) / 24.0;
+				if (u * u / 0.62 + v * v / 0.92 > 1) continue;
+				int col = 0xFFC9C3B8;
+				double luz = 0.15 - 0.25 * u - 0.2 * v;
+				if (luz < -0.1) col = 0xFFA39C90;
+				if (luz < -0.3) col = 0xFF7E776C;
+				boolean ojo = Math.pow((Math.abs(u) - 0.30) / 0.17, 2) + Math.pow((v + 0.18) / 0.20, 2) <= 1;
+				if (ojo) col = 0xFF000000;
+				if (ojo && Math.hypot(Math.abs(u) - 0.30, v + 0.18) < 0.035) col = 0xFFFFFFFF;
+				if (!ojo && Math.pow((Math.abs(u) - 0.30) / 0.24, 2) + Math.pow((v + 0.18) / 0.28, 2) <= 1) col = 0xFF5A5148;
+				if (sonrisa) {
+					double curva = 0.30 + 0.25 * u * u;
+					if (Math.abs(u) < 0.62 && v > curva && v < curva + 0.10) col = 0xFF000000;
+					if (Math.abs(u) < 0.58 && v > curva + 0.02 && v < curva + 0.06 && Math.abs(u) % 0.09 < 0.05) col = 0xFFE8E2D0;
+				} else {
+					boolean boca = u * u / 0.06 + (v - 0.45) * (v - 0.45) / 0.07 <= 1;
+					if (boca) col = 0xFF000000;
+					if (boca && v > 0.62) col = 0xFF3A0000;
+				}
+				if (Math.abs(u) < 0.03 && v > -0.02 && v < 0.12) col = 0xFF5A5148;
+				if (negativo) col = 0xFF000000 | (~col & 0x00FFFFFF);
+				g.fill(ox + x * t, oy + y * t, ox + x * t + t, oy + y * t + t, col);
+			}
+	}
 
 	private static void dibujarJumpscare(GuiGraphicsExtractor g) {
 		FunnyEstado.Efecto f = FunnyEstado.actual;
@@ -82,13 +173,16 @@ public class KrimCliente implements ClientModInitializer {
 		int sx = r.nextInt(-8, 9), sy = r.nextInt(-8, 9);
 		int lado = Math.round(Math.max(w, h) * 1.15f), t = lado / 8;
 		int ox = (w - lado) / 2 + sx, oy = (h - lado) / 2 + sy;
-		int verde = f.variante() == 0 ? 0xFF4CAF50 : 0xFF2E7D32;
-		g.fill(0, 0, w, h, verde);
-		for (int y = 0; y < 8; y++)
-			for (int x = 0; x < 8; x++) {
-				int c = CREEPER[y].charAt(x) == 'K' ? 0xFF0B0B0B : (((x * 7 + y * 3) % 5 == 0) ? 0xFF66BB6A : 0);
-				if (c != 0) g.fill(ox + x * t, oy + y * t, ox + x * t + t, oy + y * t + t, c);
-			}
+		if (f.variante() == 0) {
+			g.fill(0, 0, w, h, 0xFF4CAF50);
+			for (int y = 0; y < 8; y++)
+				for (int x = 0; x < 8; x++) {
+					int c = CREEPER[y].charAt(x) == 'K' ? 0xFF0B0B0B : (((x * 7 + y * 3) % 5 == 0) ? 0xFF66BB6A : 0);
+					if (c != 0) g.fill(ox + x * t, oy + y * t, ox + x * t + t, oy + y * t + t, c);
+				}
+		} else {
+			caraTerror(g, w, h, sx, sy, f.variante() == 1, el);
+		}
 		if (el > 900) g.fill(0, 0, w, h, ((int) (255 * Math.min(1, (el - 900) / 400f)) << 24) | 0xFFFFFF);
 	}
 

@@ -228,11 +228,27 @@ public final class Funnys {
 
 	// ------------------------------------------------------------------ jumpscare (sin congelar)
 	static void jumpscare(MinecraftServer s) {
-		FunnyEstado.actual = new FunnyEstado.Efecto(++contador, "jumpscare", RuedaEstado.ahoraMs(), 1300, "", "", "",
-				new int[0], new String[0], r().nextInt(2));
-		sonar(s, "entity.creeper.primed", 1, 1.0);
-		sonar(s, "entity.generic.explode", 0.9, 0.7);
-		sonar(s, "entity.ghast.scream", 1, 0.8);
+		int variante = r().nextInt(3); // 0 creeper, 1 sonrisa macabra, 2 grito
+		FunnyEstado.actual = new FunnyEstado.Efecto(++contador, "jumpscare", RuedaEstado.ahoraMs(), 1500, "", "", "",
+				new int[0], new String[0], variante);
+		// grito: varios sonidos a la vez para que suene a alarido
+		sonar(s, "entity.ghast.scream", 1, 0.7);
+		sonar(s, "entity.enderman.scream", 1, 0.6);
+		sonar(s, "entity.goat.screaming.ambient", 1, 0.8);
+		if (variante == 0) sonar(s, "entity.generic.explode", 1, 0.7);
+		else sonar(s, "entity.warden.roar", 1, 1.3);
+	}
+
+	// ------------------------------------------------------------------ bardeo gigante al que canjeó
+	static void bardeo(MinecraftServer s, String us) {
+		String b = Bardeos.generar(us);
+		FunnyEstado.actual = new FunnyEstado.Efecto(++contador, "bardeo", RuedaEstado.ahoraMs(), 6500, b, "— el chat", "",
+				new int[0], new String[0], r().nextInt(3));
+		sonar(s, "block.anvil.land", 1, 0.6);
+		sonar(s, "entity.villager.no", 1, 0.8);
+		Ruleta.despues(8, sv -> sonar(sv, "entity.witch.celebrate", 1, 1.0));
+		cmd(s, "tellraw @a [{text:\"BARDEO: \",color:\"light_purple\",bold:true},{text:\"" + b.replace("\"", "'") + "\",color:\"white\"}]");
+		Registro.info("FUNNY", "Bardeo: " + b);
 	}
 
 	// ------------------------------------------------------------------ cámara lenta
