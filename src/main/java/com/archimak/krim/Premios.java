@@ -19,7 +19,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * Catálogo de la Ruleta del destino (2.3).
  *
  * Reparto (de 1000): mobs 220 · castigos 190 · efectos malos 70 · papeles/libros/mapas con puteadas 160 ·
- * mensajes 40 · frases y poesías 35 · sustos 50 · locuras neutras 65 · ítems 22 · guisito 12 · ramo 11 · galleta 10 ·
+ * mensajes 30 · frases y poesías 35 · locuras neutras 105 · ítems 22 · guisito 12 · ramo 11 · galleta 10 ·
  * efectos buenos 25 · animal 20 · curación 10 · doble 22 · jackpot 5 · nada 33.  Casi dos tercios es castigo o burla.
  *
  * Reglas de siempre: lo hostil solo daña al jugador, nada rompe bloques ni prende fuego, nada suelta ítems
@@ -102,7 +102,7 @@ public final class Premios {
 	private static Premio generar(MinecraftServer s, ServerPlayer p, String us, boolean tregua, boolean hostilesOk, boolean permitirDoble) {
 		String yo = p.getName().getString();
 		int x = r().nextInt(1000);
-		if (x < 200) return mob(p, us);
+		if (x < 220) return mob(p, us);
 		if (x < 375) return castigo(p, us, yo);
 		if (x < 410) return hablador(us, yo);
 		if (x < 450) return pr("trivia", "pregunta" + r().nextInt(4), "¡PREGUNTA!", "a ver qué tan culto sos", "aqua", Clase.NEUTRO,
@@ -111,7 +111,7 @@ public final class Premios {
 		if (x < 640) return burla(us, yo);
 		if (x < 670) return mensaje(us, yo);
 		if (x < 705) return frase(us);
-		if (x < 745) return susto();
+		if (x < 725) return castigo(p, us, yo);
 		if (x < 830) return locura(p, us, yo);
 		if (x < 852) return item(us);
 		if (x < 864) return guisito(us);
@@ -138,6 +138,9 @@ public final class Premios {
 	private record Mob(String id, String nombre, int peso, int min, int max, Lugar lugar, String extra) {}
 
 	private static final String ZOMBIE = ",CanBreakDoors:0b";
+	// /summon con datos no equipa a los mobs, así que el arma va explícita
+	private static String arma(String item) { return ",equipment:{mainhand:{id:\"minecraft:" + item + "\",count:1}}"; }
+	private static final String ARCO = arma("bow");
 	private static final String INMUNE = ",IsImmuneToZombification:1b";
 
 	private static final List<Mob> MOBS = List.of(
@@ -146,35 +149,35 @@ public final class Premios {
 			new Mob("husk", "Momia", 6, 1, 2, Lugar.SUELO, ZOMBIE),
 			new Mob("drowned", "Ahogado", 5, 1, 2, Lugar.SUELO, ZOMBIE),
 			new Mob("zombie_villager", "Aldeano zombie", 4, 1, 2, Lugar.SUELO, ZOMBIE),
-			new Mob("skeleton", "Esqueleto", 9, 1, 3, Lugar.LEJOS, ""),
-			new Mob("stray", "Esqueleto glacial", 4, 1, 2, Lugar.LEJOS, ""),
-			new Mob("bogged", "Esqueleto pantanoso", 4, 1, 2, Lugar.LEJOS, ""),
+			new Mob("skeleton", "Esqueleto", 9, 1, 3, Lugar.LEJOS, ARCO),
+			new Mob("stray", "Esqueleto glacial", 4, 1, 2, Lugar.LEJOS, ARCO),
+			new Mob("bogged", "Esqueleto pantanoso", 4, 1, 2, Lugar.LEJOS, ARCO),
 			new Mob("spider", "Araña", 8, 1, 3, Lugar.SUELO, ""),
 			new Mob("cave_spider", "Araña de cueva", 5, 2, 4, Lugar.SUELO, ""),
 			new Mob("creeper", "Creeper", 7, 1, 2, Lugar.SUELO, ""),
 			new Mob("witch", "Bruja", 4, 1, 1, Lugar.SUELO, ""),
-			new Mob("pillager", "Saqueador", 5, 1, 3, Lugar.LEJOS, ""),
-			new Mob("vindicator", "Vindicador", 3, 1, 1, Lugar.SUELO, ""),
+			new Mob("pillager", "Saqueador", 5, 1, 3, Lugar.LEJOS, arma("crossbow")),
+			new Mob("vindicator", "Vindicador", 3, 1, 1, Lugar.SUELO, arma("iron_axe")),
 			new Mob("evoker", "Evocador", 2, 1, 1, Lugar.SUELO, ""),
-			new Mob("illusioner", "Ilusionista", 1, 1, 1, Lugar.LEJOS, ""),
+			new Mob("illusioner", "Ilusionista", 1, 1, 1, Lugar.LEJOS, ARCO),
 			new Mob("phantom", "Phantom", 5, 2, 3, Lugar.VUELA, ""),
 			new Mob("slime", "Slime", 5, 2, 4, Lugar.SUELO, ",Size:0"),
 			new Mob("magma_cube", "Cubo de magma", 4, 2, 4, Lugar.SUELO, ",Size:0"),
 			new Mob("endermite", "Endermite", 3, 2, 4, Lugar.SUELO, ""),
-			new Mob("piglin", "Piglin", 3, 1, 2, Lugar.SUELO, INMUNE),
-			new Mob("piglin_brute", "Piglin bruto", 2, 1, 1, Lugar.SUELO, INMUNE),
+			new Mob("piglin", "Piglin", 3, 1, 2, Lugar.SUELO, INMUNE + arma("golden_sword")),
+			new Mob("piglin_brute", "Piglin bruto", 2, 1, 1, Lugar.SUELO, INMUNE + arma("golden_axe")),
 			new Mob("hoglin", "Hoglin", 2, 1, 1, Lugar.SUELO, INMUNE),
 			new Mob("zoglin", "Zoglin", 1, 1, 1, Lugar.SUELO, ""),
-			new Mob("wither_skeleton", "Esqueleto wither", 2, 1, 1, Lugar.SUELO, ""),
+			new Mob("wither_skeleton", "Esqueleto wither", 2, 1, 1, Lugar.SUELO, arma("stone_sword")),
 			new Mob("guardian", "Guardián", 2, 1, 2, Lugar.AGUA, ""),
 			new Mob("shulker", "Shulker", 1, 1, 1, Lugar.SUELO, ""),
 			new Mob("ghast", "Ghast", 2, 1, 1, Lugar.GRANDE, ""),
 			new Mob("breeze", "Breeze", 3, 1, 1, Lugar.SUELO, ""),
 			new Mob("creaking", "Creaking", 2, 1, 1, Lugar.SUELO, ""),
 			new Mob("vex", "Vex", 3, 2, 4, Lugar.VUELA, ""),
-			new Mob("spider", "Jinete araña", 3, 1, 1, Lugar.SUELO, ",Passengers:[{id:\"minecraft:skeleton\"," + TAGR + "," + SIN + "}]"),
+			new Mob("spider", "Jinete araña", 3, 1, 1, Lugar.SUELO, ",Passengers:[{id:\"minecraft:skeleton\"," + TAGR + "," + SIN + ARCO + "}]"),
 			new Mob("chicken", "Pollito jockey", 3, 1, 2, Lugar.SUELO, ",EggLayTime:2147483647,Passengers:[{id:\"minecraft:zombie\",IsBaby:1b,CanBreakDoors:0b," + TAGR + "," + SIN + "}]"),
-			new Mob("skeleton_horse", "Jinete esqueleto", 1, 1, 1, Lugar.SUELO, ",Passengers:[{id:\"minecraft:skeleton\"," + TAGR + "," + SIN + "}]"));
+			new Mob("skeleton_horse", "Jinete esqueleto", 1, 1, 1, Lugar.SUELO, ",Passengers:[{id:\"minecraft:skeleton\"," + TAGR + "," + SIN + ARCO + "}]"));
 
 	private static Mob elegirMob() {
 		int total = 0;
@@ -303,18 +306,19 @@ public final class Premios {
 				cmd(sv, "execute as @p at @s run tp @s ~ ~ ~ ~180 ~");
 				cmd(sv, "execute at @p run playsound minecraft:entity.player.attack.sweep master @p ~ ~ ~ 1 1");
 			});
-			case 14 -> pr("castigo", "borde", "AL BORDE DE LA MUERTE", "te quedó medio corazón", "dark_red", Clase.MALO, (sv, pl, u) -> {
-				float vida = pl.getHealth();
-				if (vida > 3) cmd(sv, "damage @p " + Math.max(1, Math.round(vida - 2)) + " minecraft:generic");
-				Ruleta.despues(120, s2 -> cmd(s2, "effect give @p minecraft:regeneration 6 1 true"));
+			case 14 -> pr("castigo", "abuelo", "MODO ABUELO", "lento, ciego y con hambre", "red", Clase.MALO, (sv, pl, u) -> {
+				cmd(sv, "effect give @p minecraft:slowness 20 1 true");
+				cmd(sv, "effect give @p minecraft:blindness 12 0 true");
+				cmd(sv, "effect give @p minecraft:hunger 20 0 true");
+				cmd(sv, "execute at @p run playsound minecraft:entity.villager.ambient master @p ~ ~ ~ 1 0.5");
 			});
 			case 15 -> pr("castigo", "tnt", "¡TNT DE VERDAD!", "esta sí explota... corré", "dark_red", Clase.HOSTIL, (sv, pl, u) -> {
 				BlockPos pos = Premios.suelo((ServerLevel) pl.level(), pl, 2, 3);
 				String donde = pos == null ? "~ ~ ~" : (pos.getX() + 0.5) + " " + pos.getY() + " " + (pos.getZ() + 0.5);
 				cmd(sv, "execute as @p at @s run summon minecraft:tnt " + donde + " {fuse:70,explosion_power:2.0f," + TAGR + "}");
 			});
-			case 16 -> pr("castigo", "francotiradores", "FRANCOTIRADORES", "3 esqueletos a lo lejos", "red", Clase.HOSTIL, (sv, pl, u) -> {
-				for (int i = 0; i < 3; i++) invocar(sv, lugar((ServerLevel) pl.level(), pl, Lugar.LEJOS), "skeleton", "", us, "red");
+			case 16 -> pr("castigo", "esqueletos3", "3 ESQUELETOS", "mandados por " + us, "red", Clase.HOSTIL, (sv, pl, u) -> {
+				for (int i = 0; i < 3; i++) invocar(sv, lugar((ServerLevel) pl.level(), pl, Lugar.LEJOS), "skeleton", ARCO, us, "red");
 			});
 			case 17 -> pr("castigo", "murcielagos", "¡MURCIÉLAGOS!", "30 segundos de caos", "dark_gray", Clase.MALO, (sv, pl, u) -> lluvia(sv, "bat", "", 12, 600, false));
 			case 18 -> pr("castigo", "apagon", "APAGÓN", "no ves nada", "dark_gray", Clase.MALO, (sv, pl, u) -> {
@@ -361,8 +365,8 @@ public final class Premios {
 	// BURLAS: papeles, libros y mapas con puteadas y dibujos
 	// =====================================================================
 	private static final List<String> INSULTOS = List.of("manco", "boludo", "pelotudo", "gil", "nabo", "tarado", "bobo",
-			"salame", "zapallo", "queso", "inútil", "patético", "cagón", "noob", "perdedor", "burro", "papanatas", "chanta",
-			"pecho frío", "boludazo", "otario", "trompa", "lento", "fracasado", "tontito", "pavo", "gilazo", "longi");
+			"salame", "zapallo", "queso", "inútil", "patético", "cagón", "noob", "perdedor", "burro", "chanta",
+			"pecho frío", "boludazo", "lento", "fracasado", "tontito", "pavo", "gilazo", "tarado", "nabo");
 	private static final List<String> ASCII = List.of("8====D", "8=====D~~", "B===D", "8======D", "8==D", "(_)_)::::::D",
 			"8=D", "8========D", "c===3", "8===D ~ ~ ~");
 	private static final List<String> FIRMAS = List.of("Con cariño", "Atte", "Besos", "Tu fan", "Sin rencor", "Con odio",
@@ -468,24 +472,6 @@ public final class Premios {
 	}
 
 	// =====================================================================
-	// SUSTOS (sonidos detrás tuyo)
-	// =====================================================================
-	private static final List<String> SONIDOS = List.of(
-			"entity.creeper.primed", "entity.ghast.scream", "ambient.cave", "entity.enderman.stare", "entity.enderman.scream",
-			"entity.wither.spawn", "entity.elder_guardian.curse", "entity.warden.emerge", "entity.warden.roar",
-			"entity.goat.screaming.ambient", "entity.zombie.attack_wooden_door", "entity.generic.explode", "block.anvil.land",
-			"entity.player.hurt", "entity.skeleton.ambient", "entity.spider.ambient", "entity.tnt.primed",
-			"entity.lightning_bolt.thunder", "entity.wolf.growl", "entity.phantom.swoop", "block.chest.open",
-			"block.wooden_door.open", "entity.creaking.activate", "entity.ravager.roar", "entity.evoker.prepare_summon");
-
-	private static Premio susto() {
-		String id = uno(SONIDOS);
-		String t = uno(List.of("NADA... ¿O SÍ?", "SHHH...", "¿ESCUCHASTE ESO?", "NO TE DES VUELTA", "DETRÁS TUYO"));
-		return pr("susto", id, t, "prestá atención...", "dark_gray", Clase.NEUTRO, (sv, pl, u) ->
-				Ruleta.despues(20, s2 -> cmd(s2, "execute as @p at @s positioned ^ ^ ^-2 run playsound minecraft:" + id + " master @p ~ ~ ~ 1 " + (0.8 + r().nextDouble() * 0.3))));
-	}
-
-	// =====================================================================
 	// LOCURAS NEUTRAS
 	// =====================================================================
 	private static Premio locura(ServerPlayer p, String us, String yo) {
@@ -563,11 +549,11 @@ public final class Premios {
 			new String[] { "speed", "velocidad" }, new String[] { "saturation", "panza llena" },
 			new String[] { "blindness", "ceguera" }, new String[] { "nausea", "mareo" }, new String[] { "poison", "veneno" },
 			new String[] { "weakness", "debilidad" }, new String[] { "slowness", "lentitud" }, new String[] { "hunger", "hambre" },
-			new String[] { "wither", "marchitez" }, new String[] { "levitation", "levitación" }, new String[] { "glowing", "brillo" });
+			new String[] { "wither", "marchitez" }, new String[] { "glowing", "brillo" });
 
 	private static Premio guisito(String us) {
 		String[] ef = uno(GUISO);
-		int segs = ef[0].equals("levitation") ? entre(3, 5) : ef[0].equals("wither") || ef[0].equals("poison") ? entre(5, 8) : entre(15, 30);
+		int segs = ef[0].equals("wither") || ef[0].equals("poison") ? entre(6, 10) : entre(15, 30);
 		String abuela = uno(List.of("Guisito de la abuela de %u", "Guiso misterioso de %u", "Sopita de la abuela de %u",
 				"Guiso que cocinó %u", "Guisito con amor de %u")).replace("%u", us);
 		String ingrediente = uno(List.of("ingrediente secreto: ???", "tiene algo raro adentro", "la abuela no dice qué tiene",
@@ -637,18 +623,32 @@ public final class Premios {
 	}
 
 	// =====================================================================
-	// FRASES MOTIVADORAS, DESMOTIVADORAS Y POESÍA
+	// FRASES (dichos populares) Y POESÍA
 	// =====================================================================
-	private static final List<String> MOTIVADORAS = List.of("Hoy es un gran día para no morir", "Creé en vos, aunque nadie más lo haga",
-			"La constancia vence al talento", "Cada muerte es un aprendizaje", "Hoy vas a encontrar diamantes",
-			"Nunca es tarde para construir una casa", "El chat cree en vos (un poquito)", "Sos más fuerte que un zombie bebé",
-			"Todo gran castillo empezó con un bloque de tierra", "Si te caés, levantate. Si te caés de 30 bloques, no",
-			"Los creepers explotan, vos no", "El que persevera, minea", "Hoy sí, hoy se gana");
-	private static final List<String> DESMOTIVADORAS = List.of("Nada de lo que hagas importa, igual hay creepers",
-			"Mañana vas a morir igual", "Hay gente que nace con talento. Vos no", "Rendirse también es una opción",
-			"El fracaso es tu mejor amigo", "Tanto minar para nada", "La lava te espera", "Tus amigos juegan mejor",
-			"El esfuerzo no siempre paga, mirate a vos", "Todo diamante empezó siendo carbón. El tuyo sigue siendo carbón",
-			"No es mala suerte, es falta de habilidad", "Ni el aldeano te quiere tradear", "Lo intentaste. Fallaste. Clásico");
+	private static final List<String> FRASES = List.of(
+			// dichos populares
+			"No hay mal que dure cien años", "Más vale pájaro en mano que cien volando", "A caballo regalado no se le miran los dientes",
+			"Al que madruga Dios lo ayuda", "Camarón que se duerme se lo lleva la corriente", "En casa de herrero, cuchillo de palo",
+			"El que avisa no traiciona", "Dime con quién andás y te diré quién sos", "Más vale tarde que nunca",
+			"Ojos que no ven, corazón que no siente", "Perro que ladra no muerde", "El que no llora no mama",
+			"Hay más días que longanizas", "Cría cuervos y te sacarán los ojos", "No le busques la quinta pata al gato",
+			"El que se quema con leche ve una vaca y llora", "Te conozco, mascarita", "Es lo que hay, valor",
+			"Lo atamos con alambre", "Con la tuya", "Se te escapó la tortuga", "Andá a cantarle a Gardel",
+			"Al pan pan y al vino vino", "No hay peor ciego que el que no quiere ver", "Muerto el perro, se acabó la rabia",
+			"El que mucho abarca poco aprieta", "Agua que no has de beber, dejala correr",
+			// dichos versión Minecraft
+			"El que se quema con lava ve un horno y llora", "Más vale un diamante en mano que cien en la cueva",
+			"A cofre regalado no se le miran los ítems", "Al que madruga lo explota un creeper", "En casa de herrero, pico de madera",
+			"Dime con quién minás y te diré quién sos", "Camarón que se duerme, se lo come el phantom",
+			"Ojos que no ven, enderman que no se enoja", "Perro que ladra no muerde, zombie que gruñe sí",
+			"El que avisa no es creeper", "Lo atamos con alambre y redstone", "No hay mal que dure cien años ni manco que lo aguante",
+			"Andá a minarle a Gardel", "El que mucho mina, poco encuentra", "Creeper que sisea, explota",
+			// frases sueltas
+			"Hoy es un gran día para no morir", "Todo gran castillo empezó con un bloque de tierra",
+			"Si te caés, levantate. Si te caés de 30 bloques, no", "Mañana vas a morir igual", "Rendirse también es una opción",
+			"Todo diamante empezó siendo carbón. El tuyo sigue siendo carbón", "No es mala suerte, es falta de habilidad",
+			"Ni el aldeano te quiere tradear", "Lo intentaste. Fallaste. Clásico", "El que persevera, minea",
+			"Tranqui, que lo peor está por venir", "Arriba ese ánimo, que abajo hay lava");
 	private static final List<String> POEMAS = List.of(
 			"Rosas rojas,|creepers verdes,|si no corrés,|seguro perdés.",
 			"En la cueva oscura|un ruido sonó,|no era un zombie,|era tu dignidad que se fue.",
@@ -661,8 +661,7 @@ public final class Premios {
 			"Bajaste a la mina|con fe y con valor,|volviste sin nada|y con olor a dolor.");
 
 	private static Premio frase(String us) {
-		int t = r().nextInt(3);
-		if (t == 2) {
+		if (r().nextInt(3) == 0) {
 			String poema = uno(POEMAS);
 			return pr("frase", poema, "POESÍA DEL CHAT", "mirá el chat del juego", "light_purple", Clase.NEUTRO, (sv, pl, u) -> {
 				cmd(sv, "tellraw @a {text:\"Poesía de " + us + ":\",color:\"light_purple\",bold:true}");
@@ -670,12 +669,10 @@ public final class Premios {
 				cmd(sv, "execute at @p run playsound minecraft:block.note_block.harp master @p ~ ~ ~ 1 1.2");
 			});
 		}
-		boolean motiva = t == 0;
-		String f = uno(motiva ? MOTIVADORAS : DESMOTIVADORAS);
-		return pr("frase", f, motiva ? "FRASE MOTIVADORA" : "FRASE DESMOTIVADORA", f, motiva ? "green" : "dark_gray", Clase.NEUTRO, (sv, pl, u) -> {
-			cmd(sv, "tellraw @a [{text:\"" + (motiva ? "Frase motivadora" : "Frase desmotivadora") + " de " + us + ": \",color:\""
-					+ (motiva ? "green" : "gray") + "\"},{text:\"" + esc(f) + "\",color:\"white\",italic:true}]");
-			cmd(sv, "execute at @p run playsound minecraft:" + (motiva ? "entity.player.levelup" : "entity.villager.no") + " master @p ~ ~ ~ 1 1");
+		String f = uno(FRASES);
+		return pr("frase", f, "FRASE", f, "yellow", Clase.NEUTRO, (sv, pl, u) -> {
+			cmd(sv, "tellraw @a [{text:\"Frase de " + us + ": \",color:\"gold\"},{text:\"" + esc(f) + "\",color:\"white\",italic:true}]");
+			cmd(sv, "execute at @p run playsound minecraft:block.note_block.chime master @p ~ ~ ~ 1 1");
 		});
 	}
 
@@ -688,7 +685,7 @@ public final class Premios {
 			new String[] { "parrot", "loro", "" }, new String[] { "rabbit", "conejo", "" }, new String[] { "panda", "panda", "" },
 			new String[] { "frog", "rana", "" }, new String[] { "armadillo", "armadillo", "" }, new String[] { "villager", "aldeano", "" },
 			new String[] { "llama", "llama", "" },
-			new String[] { "zombie", "zombie", ZOMBIE }, new String[] { "skeleton", "esqueleto", "" },
+			new String[] { "zombie", "zombie", ZOMBIE }, new String[] { "skeleton", "esqueleto", ARCO },
 			new String[] { "spider", "araña", "" }, new String[] { "witch", "bruja", "" }, new String[] { "creeper", "creeper", "" });
 	private static final List<String> ES_HOSTIL = List.of("zombie", "skeleton", "spider", "witch", "creeper");
 
@@ -781,7 +778,7 @@ public final class Premios {
 			new Ef("slowness", "Lentitud", 18, 30, 2), new Ef("mining_fatigue", "Fiaca minera", 18, 30, 1),
 			new Ef("nausea", "Mareo", 15, 25, 0), new Ef("blindness", "Ceguera", 10, 15, 0), new Ef("darkness", "Oscuridad", 15, 25, 0),
 			new Ef("hunger", "Hambre", 20, 30, 2), new Ef("weakness", "Debilidad", 20, 30, 1), new Ef("poison", "Veneno", 9, 14, 0),
-			new Ef("levitation", "Levitación", 4, 6, 0), new Ef("wither", "Marchitez", 7, 11, 0));
+			new Ef("levitation", "Levitación", 25, 30, 0), new Ef("wither", "Marchitez", 7, 11, 0));
 
 	private static Premio efecto(boolean bueno) {
 		Ef e = uno(bueno ? BUENOS : MALOS);
@@ -790,7 +787,7 @@ public final class Premios {
 		return pr(bueno ? "efbueno" : "efmalo", e.id(), may(e.nombre()) + romano(amp + 1), "por " + dur + " segundos",
 				bueno ? "green" : "red", bueno ? Clase.BUENO : Clase.MALO, (sv, pl, u) -> {
 					cmd(sv, "effect give @p minecraft:" + e.id() + " " + dur + " " + amp + " false");
-					if (e.id().equals("levitation")) cmd(sv, "effect give @p minecraft:slow_falling " + (dur + 10) + " 0 true");
+					if (e.id().equals("levitation")) cmd(sv, "effect give @p minecraft:slow_falling " + (dur + 20) + " 0 true");
 				});
 	}
 
@@ -956,19 +953,29 @@ public final class Premios {
 	// =====================================================================
 	// Etiquetas falsas para los otros sectores de la rueda
 	// =====================================================================
-	private static final List<String> FALSAS;
+	/** Etiqueta de un sector falso y su tipo: 0 bueno (verde), 1 neutro/interactivo (amarillo), 2 malo (rojo). */
+	public record Falsa(String texto, int tipo) {}
+
+	private static final List<Falsa> FALSAS;
 	static {
-		List<String> l = new ArrayList<>();
-		for (Mob m : MOBS) l.add(corta(may(m.nombre())));
-		for (Ef e : MALOS) l.add(corta(may(e.nombre())));
-		for (Ef e : BUENOS) l.add(corta(may(e.nombre())));
-		l.addAll(List.of("A VOLAR", "CONGELADO", "PIÑA", "FLECHAS", "SIN PATAS", "GRAVEDAD x3", "T-REX", "BORRACHERA",
-				"PÁNICO", "HAMBRE", "REVUELTO", "TNT", "HORDA", "EMBOSCADA", "CREEPERS", "MAPA", "PAPELITO", "LIBRO",
-				"PUTO EL Q LEE", "CHUPALA", "JACKPOT", "NADA", "DOBLE", "TAMAÑO", "DISCO", "HEROBRINE", "GALLINAS",
-				"GLOBO", "LUNAR", "MURCIÉLAGOS", "APAGÓN", "AL BORDE", "VEX", "PHANTOMS", "ANIMAL", "SUSTO", "MANCO",
-				"GUISITO", "RAMO", "GALLETA", "POESÍA", "FRASE", "PREGUNTA", "PARLANTE", "TRIVIA"));
+		List<Falsa> l = new ArrayList<>();
+		for (Mob m : MOBS) l.add(new Falsa(corta(may(m.nombre())), 2));
+		for (Ef e : MALOS) l.add(new Falsa(corta(may(e.nombre())), 2));
+		for (Ef e : BUENOS) l.add(new Falsa(corta(may(e.nombre())), 0));
+		for (String t : List.of("A VOLAR", "CONGELADO", "PIÑA", "FLECHAS", "SIN PATAS", "GRAVEDAD x3", "T-REX", "BORRACHERA",
+				"PÁNICO", "HAMBRE", "REVUELTO", "TNT", "HORDA", "EMBOSCADA", "CREEPERS", "MURCIÉLAGOS", "APAGÓN", "VEX",
+				"PHANTOMS", "ESQUELETOS")) l.add(new Falsa(t, 2));
+		for (String t : List.of("JACKPOT", "CURACIÓN", "ANIMAL", "GALLETITAS", "ANTORCHAS", "HIERRO", "SUPERSALTO")) l.add(new Falsa(t, 0));
+		for (String t : List.of("MAPA", "PAPELITO", "LIBRO", "PUTO EL Q LEE", "NADA", "DOBLE", "TAMAÑO", "DISCO", "HEROBRINE",
+				"GALLINAS", "GLOBO", "LUNAR", "GUISITO", "RAMO", "GALLETA", "POESÍA", "FRASE", "PREGUNTA", "PARLANTE",
+				"MENSAJE", "TNT FALSA", "GIRÁ OTRA VEZ")) l.add(new Falsa(t, 1));
 		FALSAS = List.copyOf(l);
 	}
 
-	static String etiquetaFalsa() { return uno(FALSAS); }
+	static Falsa etiquetaFalsa() { return uno(FALSAS); }
+
+	/** Tipo de color del premio real: verde bueno, amarillo interactivo/neutro, rojo malo. */
+	static int tipo(Premio p) {
+		return switch (p.clase()) { case BUENO -> 0; case NEUTRO -> 1; default -> 2; };
+	}
 }

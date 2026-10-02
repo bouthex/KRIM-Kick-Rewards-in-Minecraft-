@@ -15,7 +15,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Preguntas de cultura general y de Minecraft, estilo Kahoot: pantalla con 4 opciones de colores y tiempo.
- * Acierto: ¡CORRECTO! en pantalla. Error: caquita en el medio de la pantalla y a los 2 s un creeper "BURRO".
+ * Acierto: ¡CORRECTO! en pantalla. Error: caquita en el medio de la pantalla y a los 2 s un creeper "BURRO" (o similar).
  * Mientras la pregunta está abierta el jugador tiene resistencia total (no lo matan por estar leyendo).
  */
 public final class Trivia {
@@ -145,7 +145,7 @@ public final class Trivia {
 			"¿Cuál de estos NO es un bioma?|Desierto de hielo rosa|Badlands|Pantano de manglares|Bosque de cerezos");
 
 	/** La pregunta especial: 1 en 100. Todas las respuestas que dicen que sí son correctas. */
-	private static final String ESPECIAL = "¿Clover es el más manco del chat?";
+	private static final String ESPECIAL = "¿Clover es la más manca del chat?";
 	private static final String[] ESPECIAL_OPC = { "Sí", "Obvio", "Clarísimo", "No" };
 
 	static void iniciar() {
@@ -223,7 +223,7 @@ public final class Trivia {
 		} else {
 			Krim.cmd(s, Krim.fuente(s), "execute at @p run playsound minecraft:entity.slime.squish master @p ~ ~ ~ 1 0.5");
 			Krim.cmd(s, Krim.fuente(s), "execute at @p run playsound minecraft:entity.villager.no master @p ~ ~ ~ 1 0.8");
-			String nombre = List.of("BURRO", "BOCHADO", "IGNORANTE", "BURRÍSIMO", "APLAZADO").get(ThreadLocalRandom.current().nextInt(5));
+			String nombre = List.of("BURRO", "IGNORANTE", "BURRÍSIMO", "NABO", "MANCO").get(ThreadLocalRandom.current().nextInt(5));
 			Ruleta.despues(40, sv -> {
 				ServerPlayer pl = Ruleta.jugador(sv);
 				if (pl == null) return;

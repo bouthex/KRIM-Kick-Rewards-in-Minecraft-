@@ -167,7 +167,7 @@ public final class Dibujos {
 
 	private static String textoGrande(byte[] px, int fondo, String usuario) {
 		List<String> frases = List.of("PUTO EL QUE LEE", "MANCO", "NOOB", "GIL", "BOLUDO", "CHUPALA", "SOS MALO",
-				"TOMATELA", "ANDA A CAGAR", "QUE MIRAS", "PELOTUDO", "SALAME", "TROMPA", "CAGON", "ZAPALLO");
+				"TOMATELA", "ANDA A CAGAR", "QUE MIRAS", "PELOTUDO", "SALAME", "CAGON", "ZAPALLO");
 		String f = uno(frases);
 		int borde = uno(NEGRO, ROJO, AZUL, VIOLETA, ORO);
 		rect(px, 0, 0, N, 5, borde); rect(px, 0, N - 5, N, 5, borde); rect(px, 0, 0, 5, N, borde); rect(px, N - 5, 0, 5, N, borde);
@@ -395,7 +395,7 @@ public final class Dibujos {
 		rect(px, 0, 100, N, 28, VERDE);
 		texto(px, "RIP", 64, 26, 3, NEGRO, true);
 		texto(px, yo, 64, 54, 1, NEGRO, true);
-		texto(px, uno(List.of("MURIO", "MANCO", "QEPD", "F")), 64, 68, 2, NEGRO, true);
+		texto(px, uno(List.of("MURIO", "MANCO", "F", "GG")), 64, 68, 2, NEGRO, true);
 		texto(px, uno(List.of("POR MANCO", "SKILL ISSUE", "NI LO VIO", "OTRA VEZ")), 64, 112, 1, NEGRO, true);
 		return "tumba";
 	}

@@ -16,8 +16,12 @@ import org.joml.Matrix3x2fStack;
  * Todo se dibuja con rectángulos rotados (rayos), sin texturas.
  */
 public class KrimCliente implements ClientModInitializer {
-	private static final int[] COLORES = { 0xFFE53935, 0xFFFB8C00, 0xFFFDD835, 0xFF43A047, 0xFF00ACC1, 0xFF8E24AA };
-	private static final int[] COLORES_CLAROS = { 0xFFFF8A80, 0xFFFFCC80, 0xFFFFF59D, 0xFFA5D6A7, 0xFF80DEEA, 0xFFCE93D8 };
+	// Colores por tipo de premio, con dos tonos para que los sectores vecinos se distingan
+	// [tipo][0 = tono A, 1 = tono B, 2 = claro (ganador)]   tipo: 0 bueno, 1 interactivo, 2 malo
+	private static final int[][] COLORES = {
+			{ 0xFF2E9E46, 0xFF1F7A34, 0xFF9CFF9C },
+			{ 0xFFF2C21B, 0xFFD39B00, 0xFFFFF59D },
+			{ 0xFFE53935, 0xFFAF1F1F, 0xFFFF8A80 } };
 
 	@Override
 	public void onInitializeClient() {
@@ -140,21 +144,26 @@ public class KrimCliente implements ClientModInitializer {
 		m.rotate((float) Math.toRadians(rot));
 		float ancho = 360f / RuedaEstado.SECTORES;
 		for (int i = 0; i < RuedaEstado.SECTORES; i++) {
-			int color = (parpadeo && i == d.ganador()) ? 0xFFFFFFFF
-					: (frenada && i == d.ganador()) ? COLORES_CLAROS[i % COLORES_CLAROS.length] : COLORES[i % COLORES.length];
+			int[] paleta = COLORES[Math.max(0, Math.min(2, d.tipos()[i]))];
+			int color = (parpadeo && i == d.ganador()) ? 0xFFFFFFFF : (frenada && i == d.ganador()) ? paleta[2] : paleta[i % 2];
 			for (float a = i * ancho; a < (i + 1) * ancho; a += 1.4f) rayo(g, m, a, 0, radio, color, 4);
 		}
 		for (int i = 0; i < RuedaEstado.SECTORES; i++) rayo(g, m, i * ancho, 10, radio, 0xFF3E2723, 1);
 		for (int i = 0; i < RuedaEstado.SECTORES; i++) {
 			String et = d.etiquetas()[i];
+			float angSector = i * ancho + ancho / 2;
 			m.pushMatrix();
-			m.rotate((float) Math.toRadians(i * ancho + ancho / 2));
+			m.rotate((float) Math.toRadians(angSector));
 			m.translate(radio * 0.60f, 0);
-			float lugar = radio * 0.62f; // largo disponible del sector para el texto
-			float s = Math.min(0.95f, lugar / Math.max(1, font.width(et)));
+			// Si el sector quedó en la mitad izquierda, se da vuelta el texto para que nunca se lea de cabeza
+			float angPantalla = (((rot + angSector) % 360f) + 360f) % 360f;
+			if (angPantalla > 90f && angPantalla < 270f) m.rotate((float) Math.PI);
+			float lugar = radio * 0.66f;
+			float s = Math.min(1.0f, lugar / Math.max(1, font.width(et)));
 			m.scale(s, s);
 			int col = (frenada && i == d.ganador()) ? 0xFF000000 : 0xFFFFFFFF;
-			g.text(font, et, -font.width(et) / 2, -4, col, !(frenada && i == d.ganador()));
+			int borde = (frenada && i == d.ganador()) ? 0xFFFFFFFF : 0xFF000000;
+			conBorde(g, font, et, -font.width(et) / 2, -4, col, borde);
 			m.popMatrix();
 		}
 		m.popMatrix();
@@ -187,6 +196,22 @@ public class KrimCliente implements ClientModInitializer {
 			g.fill(-mitad, top + y, mitad + 1, top + y + 1, 0xFFE53935);
 		}
 
+		// Mientras gira: cartel grande y horizontal con lo que pasa por el puntero
+		if (!frenada) {
+			int sec = RuedaEstado.Datos.sectorBajoPuntero(rot);
+			String actual = d.etiquetas()[sec];
+			int[] paleta = COLORES[Math.max(0, Math.min(2, d.tipos()[sec]))];
+			float ys = radio + 16;
+			int mitad = Math.round(font.width(actual) * 1.6f) / 2 + 12;
+			g.fill(-mitad - 1, Math.round(ys) - 1, mitad + 1, Math.round(ys) + 23, 0xFF000000 | (paleta[0] & 0x00FFFFFF));
+			g.fill(-mitad, Math.round(ys), mitad, Math.round(ys) + 22, 0xE0101010);
+			m.pushMatrix();
+			m.translate(0, ys + 5);
+			m.scale(1.6f, 1.6f);
+			conBorde(g, font, actual, -font.width(actual) / 2, 0, paleta[2], 0xFF000000);
+			m.popMatrix();
+		}
+
 		// Resultado
 		if (frenada) {
 			float ys = radio + 16;
@@ -196,10 +221,23 @@ public class KrimCliente implements ClientModInitializer {
 			int alto = d.detalle() == null ? 20 : 30;
 			g.fill(-mitad - 1, Math.round(ys) - 1, mitad + 1, Math.round(ys) + alto + 1, 0xFF000000 | (d.colorResultado() & 0x00FFFFFF));
 			g.fill(-mitad, Math.round(ys), mitad, Math.round(ys) + alto, 0xE0101010);
-			textoCentrado(g, m, font, d.titulo(), 0, ys + 5, 1.3f, d.colorResultado());
+			m.pushMatrix();
+			m.translate(0, ys + 5);
+			m.scale(1.3f, 1.3f);
+			conBorde(g, font, d.titulo(), -font.width(d.titulo()) / 2, 0, d.colorResultado(), 0xFF000000);
+			m.popMatrix();
 			if (d.detalle() != null) textoCentrado(g, m, font, d.detalle(), 0, ys + 19, 1.0f, 0xFFDDDDDD);
 		}
 		m.popMatrix();
+	}
+
+	/** Texto con borde de 1 px alrededor: se lee bien sobre cualquier color. */
+	private static void conBorde(GuiGraphicsExtractor g, Font font, String t, int x, int y, int color, int borde) {
+		g.text(font, t, x - 1, y, borde, false);
+		g.text(font, t, x + 1, y, borde, false);
+		g.text(font, t, x, y - 1, borde, false);
+		g.text(font, t, x, y + 1, borde, false);
+		g.text(font, t, x, y, color, false);
 	}
 
 	private static void rayo(GuiGraphicsExtractor g, Matrix3x2fStack m, float grados, float desde, float hasta, int color, int grosor) {

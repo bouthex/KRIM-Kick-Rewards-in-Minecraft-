@@ -155,15 +155,17 @@ public final class Ruleta {
 		ThreadLocalRandom r = ThreadLocalRandom.current();
 		int ganador = r.nextInt(RuedaEstado.SECTORES);
 		String[] etiquetas = new String[RuedaEstado.SECTORES];
+		int[] tipos = new int[RuedaEstado.SECTORES];
 		List<String> usadas = new ArrayList<>();
 		usadas.add(premio.etiqueta());
 		for (int i = 0; i < RuedaEstado.SECTORES; i++) {
-			if (i == ganador) { etiquetas[i] = premio.etiqueta(); continue; }
-			String e;
+			if (i == ganador) { etiquetas[i] = premio.etiqueta(); tipos[i] = Premios.tipo(premio); continue; }
+			Premios.Falsa f;
 			int intentos = 0;
-			do { e = Premios.etiquetaFalsa(); } while (usadas.contains(e) && ++intentos < 20);
-			usadas.add(e);
-			etiquetas[i] = e;
+			do { f = Premios.etiquetaFalsa(); } while (usadas.contains(f.texto()) && ++intentos < 20);
+			usadas.add(f.texto());
+			etiquetas[i] = f.texto();
+			tipos[i] = f.tipo();
 		}
 		// Carnada: a veces aparece WARDEN, DRAGÓN o WITHER en la rueda (muchas veces pegado al ganador
 		// para que "casi" salga). Es puro baiteo: el catálogo no los tiene, así que nunca pueden salir.
@@ -171,15 +173,15 @@ public final class Ruleta {
 			int lado = r.nextBoolean() ? 1 : -1;
 			int pos = r.nextInt(100) < 65 ? Math.floorMod(ganador + lado, RuedaEstado.SECTORES)
 					: Math.floorMod(ganador + r.nextInt(2, RuedaEstado.SECTORES - 1), RuedaEstado.SECTORES);
-			if (pos != ganador) etiquetas[pos] = List.of("WARDEN", "DRAGÓN", "WITHER").get(r.nextInt(3));
+			if (pos != ganador) { etiquetas[pos] = List.of("WARDEN", "DRAGÓN", "WITHER").get(r.nextInt(3)); tipos[pos] = 2; }
 		}
 		float ancho = 360f / RuedaEstado.SECTORES;
 		float base = ((255f - ganador * ancho) % 360f + 360f) % 360f;
 		float jitter = (float) r.nextDouble(-ancho * 0.35, ancho * 0.35);
 		float anguloFinal = 360f * r.nextInt(5, 8) + base + jitter;
 
-		rueda = new RuedaEstado.Datos(usuarioActual, etiquetas, ganador, RuedaEstado.ahoraMs(), GIRO_MS, TOTAL_MS,
-				anguloFinal, premio.titulo(), premio.detalle(), Premios.argb(premio.color()), COLA.size());
+		rueda = new RuedaEstado.Datos(usuarioActual, etiquetas, tipos, ganador, RuedaEstado.ahoraMs(), GIRO_MS, TOTAL_MS,
+				anguloFinal, premio.titulo(), premio.detalle(), new int[] { 0xFF7CFC7C, 0xFFFFE066, 0xFFFF6B6B }[Premios.tipo(premio)], COLA.size());
 		RuedaEstado.actual = rueda;
 		girando = true; revelado = false; hecho = false; ultimoSector = -1;
 		cmd(s, "execute at @p run playsound minecraft:block.beacon.activate master @p ~ ~ ~ 0.8 1.4");

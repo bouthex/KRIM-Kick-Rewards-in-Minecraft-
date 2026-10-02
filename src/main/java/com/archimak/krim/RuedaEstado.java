@@ -8,7 +8,8 @@ package com.archimak.krim;
 public final class RuedaEstado {
 	public static final int SECTORES = 12;
 
-	public record Datos(String usuario, String[] etiquetas, int ganador, long inicioMs, int giroMs, int totalMs,
+	/** tipos[i]: 0 bueno (verde), 1 interactivo/neutro (amarillo), 2 malo (rojo). */
+	public record Datos(String usuario, String[] etiquetas, int[] tipos, int ganador, long inicioMs, int giroMs, int totalMs,
 			float anguloFinal, String titulo, String detalle, int colorResultado, int enFila) {
 
 		/** Rotación de la rueda (grados) a los ms indicados desde el inicio. */
