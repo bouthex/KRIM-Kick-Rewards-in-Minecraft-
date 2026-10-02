@@ -23,11 +23,14 @@ import java.util.function.Predicate;
  */
 public final class Ruleta {
 	private static final int MAX_COLA = 20;
-	private static final int GIRO_MS = 5200, ACCION_MS = 700, TOTAL_MS = 9000;
+	// La rueda gira 5,2 s, muestra el resultado 2,6 s y se va; recién ahí aparece lo que salió
+	private static final int GIRO_MS = 5200, TOTAL_MS = 7800;
 
 	private record Tarea(long cuando, Consumer<MinecraftServer> accion) {}
 
-	private static final ArrayDeque<String> COLA = new ArrayDeque<>();
+	private record Pedido(String usuario, String forzar) {}
+
+	private static final ArrayDeque<Pedido> COLA = new ArrayDeque<>();
 	private static final List<Tarea> TAREAS = new ArrayList<>();
 	private static long reloj;
 	private static boolean girando, revelado, hecho, limpiado;
@@ -65,16 +68,19 @@ public final class Ruleta {
 		return false;
 	}
 
-	public static void pedir(MinecraftServer s, ServerPlayer p, String usuario) {
+	public static void pedir(MinecraftServer s, ServerPlayer p, String usuario) { pedir(s, p, usuario, null); }
+
+	/** forzar: null para sortear normal, o un atajo del modo prueba (edit, warden, pregunta, ...). */
+	public static void pedir(MinecraftServer s, ServerPlayer p, String usuario, String forzar) {
 		if (COLA.size() >= MAX_COLA) {
 			Registro.aviso("RULETA", "Fila llena, se descarta el giro de " + usuario);
 			return;
 		}
-		COLA.add(usuario);
+		COLA.add(new Pedido(usuario, forzar));
 		Registro.info("RULETA", "Giro de " + usuario + " en fila (" + COLA.size() + ")");
 	}
 
-	static void otraVez(String usuario) { COLA.addFirst(usuario); }
+	static void otraVez(String usuario) { COLA.addFirst(new Pedido(usuario, null)); }
 
 	public static void despues(int ticks, Consumer<MinecraftServer> accion) {
 		TAREAS.add(new Tarea(reloj + Math.max(1, ticks), accion));
@@ -132,24 +138,29 @@ public final class Ruleta {
 			}
 		}
 		if (el >= GIRO_MS && !revelado) { revelado = true; revelar(s); }
-		if (el >= GIRO_MS + ACCION_MS && !hecho) {
+		if (el >= TOTAL_MS && !hecho) {
 			hecho = true;
+			if (RuedaEstado.actual == rueda) RuedaEstado.actual = null;
 			ServerPlayer p = jugador(s);
 			if (p != null) {
 				try { premio.accion().hacer(s, p, usuarioActual); }
 				catch (Exception e) { Registro.error("RULETA", "Falló el premio " + premio.titulo(), e); }
 			}
-		}
-		if (el >= TOTAL_MS) {
 			girando = false;
-			if (RuedaEstado.actual == rueda) RuedaEstado.actual = null;
 		}
 	}
 
 	private static void empezar(MinecraftServer s, ServerPlayer p) {
-		usuarioActual = COLA.poll();
+		Pedido pedido = COLA.poll();
+		usuarioActual = pedido.usuario();
 		boolean tregua = p.getHealth() < 8.0F;
-		premio = Premios.sortear(s, p, usuarioActual, tregua, proteccion);
+		premio = null;
+		if (pedido.forzar() != null) {
+			premio = Premios.forzado(s, p, usuarioActual, pedido.forzar());
+			if (premio == null) Registro.aviso("RULETA", "Modo prueba: no existe \"" + pedido.forzar() + "\", se sortea normal");
+			else Registro.info("RULETA", "Modo prueba: forzado " + pedido.forzar());
+		}
+		if (premio == null) premio = Premios.sortear(s, p, usuarioActual, tregua, proteccion);
 		Registro.info("RULETA", usuarioActual + " gira" + (tregua ? " (tregua: poca vida)" : "") + " -> " + premio.titulo()
 				+ (premio.detalle() != null ? " | " + premio.detalle() : "") + " [" + premio.clase() + "]");
 

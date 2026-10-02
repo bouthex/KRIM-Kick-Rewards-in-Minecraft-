@@ -92,7 +92,9 @@ public final class ServidorHttp {
 			}
 			case "/ruleta" -> {
 				String usuario = usuario(params);
-				boolean ok = Krim.encolar("ruleta", "usuario=\"" + usuario + "\"", (s, p) -> Ruleta.pedir(s, p, usuario));
+				String forzar = params.get("forzar") == null ? null : params.get("forzar").trim().toLowerCase();
+				boolean ok = Krim.encolar("ruleta", "usuario=\"" + usuario + "\"" + (forzar != null ? " forzar=" + forzar : ""),
+						(s, p) -> Ruleta.pedir(s, p, usuario, forzar));
 				responder(c, ok ? 200 : 503, ok ? "ok" : "no hay ningun mundo abierto");
 			}
 			case "/estado" -> responder(c, 200,

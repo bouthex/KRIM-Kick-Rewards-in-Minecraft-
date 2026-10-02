@@ -95,6 +95,54 @@ public final class Premios {
 		while (CATEGORIAS.size() > 2) CATEGORIAS.removeFirst();
 	}
 
+	/** Atajos del modo prueba -> prefijo de la clave del premio. */
+	private static final java.util.Map<String, String> ATAJOS = java.util.Map.ofEntries(
+			java.util.Map.entry("edit", "funny:edit"), java.util.Map.entry("creditos", "funny:creditos"),
+			java.util.Map.entry("apagon", "funny:apagon"), java.util.Map.entry("lenta", "funny:lenta"),
+			java.util.Map.entry("jumpscare", "funny:jumpscare"), java.util.Map.entry("risas", "funny:risas"),
+			java.util.Map.entry("disco", "funny:disco"), java.util.Map.entry("funny", "funny:"),
+			java.util.Map.entry("warden", "jefe:wardenbebe"), java.util.Map.entry("dragon", "jefe:dragontrucho"),
+			java.util.Map.entry("wither", "jefe:withercarton"), java.util.Map.entry("jefefinal", "jefe:jefefinal"),
+			java.util.Map.entry("jefe", "jefe:"), java.util.Map.entry("pregunta", "trivia:"),
+			java.util.Map.entry("parlante", "hablador:"), java.util.Map.entry("mapa", "burla:mapa"),
+			java.util.Map.entry("papel", "burla:papel"), java.util.Map.entry("libro", "burla:libro"),
+			java.util.Map.entry("guisito", "guiso:"), java.util.Map.entry("ramo", "ramo:"), java.util.Map.entry("galleta", "galleta:"),
+			java.util.Map.entry("frase", "frase:"), java.util.Map.entry("mob", "mob:"), java.util.Map.entry("castigo", "castigo:"),
+			java.util.Map.entry("locura", "locura:"), java.util.Map.entry("mensaje", "mensaje:"), java.util.Map.entry("animal", "animal:"),
+			java.util.Map.entry("item", "item:"), java.util.Map.entry("jackpot", "jackpot:"), java.util.Map.entry("nada", "nada:"),
+			java.util.Map.entry("doble", "doble:"));
+
+	/** Modo prueba: devuelve un premio del tipo pedido (ignora la tregua y el anti-repetición), o null si no existe. */
+	public static Premio forzado(MinecraftServer s, ServerPlayer p, String us, String que) {
+		String prefijo = ATAJOS.get(que);
+		if (prefijo == null) return null;
+		String yo = p.getName().getString();
+		for (int i = 0; i < 300; i++) {
+			Premio x = switch (prefijo.substring(0, prefijo.indexOf(':'))) {
+				case "funny" -> funny(us, yo);
+				case "jefe" -> jefe(us);
+				case "trivia" -> pr("trivia", "pregunta", "¡PREGUNTA!", "a ver qué tan culto sos", "aqua", Clase.NEUTRO, (sv, pl, u) -> Trivia.preguntar(sv, us));
+				case "hablador" -> hablador(us, yo);
+				case "burla" -> burla(us, yo);
+				case "guiso" -> guisito(us);
+				case "ramo" -> ramo(us);
+				case "galleta" -> galleta(us);
+				case "frase" -> frase(us);
+				case "mob" -> mob(p, us);
+				case "castigo" -> castigo(p, us, yo);
+				case "locura" -> locura(p, us, yo);
+				case "mensaje" -> mensaje(us, yo);
+				case "item" -> item(us);
+				case "jackpot" -> jackpot(us);
+				case "doble" -> doble(s, p, us, false, true);
+				case "animal" -> pr("animal", "random", "ANIMAL RANDOM", "regalo de " + us, "aqua", Clase.BUENO, (sv, pl, u) -> Mascota.crear(sv, pl, "aleatorio", us, us));
+				default -> pr("nada", "nada", "NADA", "gracias por participar, " + us, "gray", Clase.NEUTRO, NADA);
+			};
+			if (x != null && x.clave().startsWith(prefijo)) return x;
+		}
+		return null;
+	}
+
 	private static boolean permitido(Premio x, boolean tregua, boolean hostilesOk) {
 		if ((x.clase() == Clase.HOSTIL || x.clase() == Clase.JEFE) && (tregua || !hostilesOk)) return false;
 		return !(x.clase() == Clase.MALO && tregua);

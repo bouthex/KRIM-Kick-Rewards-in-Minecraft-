@@ -17,6 +17,10 @@ public final class Config {
 	static final String AGUA_DEF = "cod,salmon,tropical_fish,axolotl,squid,glow_squid,dolphin,tadpole";
 
 	public static int puerto = 47110;
+	/** 0 = automático (usa los phonks que trae el mod; si no hay, el de bloques musicales). */
+	public static int phonkTemas = 0;
+	public static int phonkSegundos = 10;
+	public static int phonkBpm = 130;
 	public static List<String> bloqueadas = new ArrayList<>();
 	public static List<String> animalesTierra = lista(TIERRA_DEF);
 	public static List<String> animalesAgua = lista(AGUA_DEF);
@@ -42,6 +46,9 @@ public final class Config {
 			boolean agregar = false;
 			if (p.getProperty("animales_tierra") == null) { p.setProperty("animales_tierra", TIERRA_DEF); agregar = true; }
 			if (p.getProperty("animales_agua") == null) { p.setProperty("animales_agua", AGUA_DEF); agregar = true; }
+			if (p.getProperty("phonk_temas") == null) { p.setProperty("phonk_temas", "0"); agregar = true; }
+			if (p.getProperty("phonk_segundos") == null) { p.setProperty("phonk_segundos", "10"); agregar = true; }
+			if (p.getProperty("phonk_bpm") == null) { p.setProperty("phonk_bpm", "130"); agregar = true; }
 			if (agregar) {
 				try (Writer w = Files.newBufferedWriter(archivo, StandardCharsets.UTF_8)) {
 					p.store(w, "KRIM - palabras_bloqueadas y listas de animales separadas por coma. Animales: ids de Minecraft (ej: cow,pig)");
@@ -49,6 +56,9 @@ public final class Config {
 			}
 			puerto = Integer.parseInt(p.getProperty("puerto", "47110").trim());
 			animalesTierra = lista(p.getProperty("animales_tierra", TIERRA_DEF));
+			phonkTemas = Math.max(0, Math.min(30, Integer.parseInt(p.getProperty("phonk_temas", "0").trim())));
+			phonkSegundos = Math.max(4, Math.min(20, Integer.parseInt(p.getProperty("phonk_segundos", "10").trim())));
+			phonkBpm = Math.max(60, Math.min(200, Integer.parseInt(p.getProperty("phonk_bpm", "130").trim())));
 			animalesAgua = lista(p.getProperty("animales_agua", AGUA_DEF));
 			for (String s : p.getProperty("palabras_bloqueadas", "").split(",")) {
 				if (!s.isBlank()) bloqueadas.add(s.trim().toLowerCase());

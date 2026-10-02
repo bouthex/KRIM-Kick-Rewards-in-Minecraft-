@@ -59,6 +59,8 @@ public final class Funnys {
 
 	// ------------------------------------------------------------------ edit de TikTok
 	static void edit(MinecraftServer s, String us, String yo) {
+		String cap = CAPTIONS.get(r().nextInt(CAPTIONS.size())).replace("%y", yo.toUpperCase());
+		if (temas() > 0) { editConTema(s, us, cap); return; }
 		Tema t = TEMAS.get(r().nextInt(TEMAS.size()));
 		int pasos = 32, durTicks = pasos * t.paso() + 10;
 		List<Integer> golpes = new ArrayList<>();
@@ -76,12 +78,55 @@ public final class Funnys {
 			});
 		}
 		Ruleta.despues(4, sv -> sonar(sv, "entity.warden.sonic_boom", 0.6, 1.4));
-		String cap = CAPTIONS.get(r().nextInt(CAPTIONS.size())).replace("%y", yo.toUpperCase());
 		int[] g = golpes.stream().mapToInt(Integer::intValue).toArray();
 		FunnyEstado.actual = new FunnyEstado.Efecto(++contador, "edit", RuedaEstado.ahoraMs(), durTicks * 50, cap,
 				"edit de " + us, "♪ " + t.nombre(), g, new String[0], r().nextInt(3));
 		congelar(s, durTicks);
 		Registro.info("FUNNY", "Edit de TikTok (" + t.nombre() + ") de " + us);
+	}
+
+	private static int temasEnElMod = -1;
+
+	/**
+	 * Cuántos phonks trae el mod adentro (los mete GitHub al compilar desde la carpeta "phonks" del repo).
+	 * Si phonk_temas en la config es mayor a 0, manda la config.
+	 */
+	static int temas() {
+		if (Config.phonkTemas > 0) return Config.phonkTemas;
+		if (temasEnElMod >= 0) return temasEnElMod;
+		int n = 0;
+		try {
+			var mod = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer(Krim.MOD_ID);
+			if (mod.isPresent()) {
+				var carpeta = mod.get().findPath("assets/krim/sounds/phonk");
+				if (carpeta.isPresent()) {
+					try (var archivos = java.nio.file.Files.list(carpeta.get())) {
+						n = (int) archivos.filter(x -> x.getFileName().toString().matches("phonk\\d+\\.ogg")).count();
+					}
+				}
+			}
+		} catch (Exception e) {
+			Registro.error("FUNNY", "No se pudieron contar los phonks del mod", e);
+		}
+		temasEnElMod = Math.min(30, n);
+		Registro.info("FUNNY", temasEnElMod > 0 ? "Phonks dentro del mod: " + temasEnElMod : "Sin phonks propios: se usa el phonk de bloques musicales");
+		return temasEnElMod;
+	}
+
+	/** Edit con uno de los phonks que trae el mod adentro. */
+	private static void editConTema(MinecraftServer s, String us, String cap) {
+		int n = 1 + r().nextInt(temas());
+		String sonido = "krim:phonk" + n;
+		int durMs = Config.phonkSegundos * 1000;
+		int beat = Math.round(60000f / Config.phonkBpm);
+		int[] g = new int[durMs / beat];
+		for (int i = 0; i < g.length; i++) g[i] = i * beat;
+		cmd(s, "execute at @p run playsound " + sonido + " master @p ~ ~ ~ 1 1");
+		Ruleta.despues(Config.phonkSegundos * 20, sv -> cmd(sv, "stopsound @p master " + sonido));
+		FunnyEstado.actual = new FunnyEstado.Efecto(++contador, "edit", RuedaEstado.ahoraMs(), durMs, cap,
+				"edit de " + us, "♪ phonk " + n, g, new String[0], r().nextInt(3));
+		congelar(s, Config.phonkSegundos * 20);
+		Registro.info("FUNNY", "Edit de TikTok con phonk propio " + n + " de " + us);
 	}
 
 	private static boolean contiene(int[] a, int v) { for (int x : a) if (x == v) return true; return false; }
