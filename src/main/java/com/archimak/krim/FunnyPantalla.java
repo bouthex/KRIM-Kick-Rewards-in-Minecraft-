@@ -76,7 +76,7 @@ public class FunnyPantalla extends Screen {
 	 * Calavera estilo emoji del meme, dibujada en una grilla de 32x32 con sombreado.
 	 * variante 0: normal · 1: ojos rojos que brillan con el beat · 2: con anteojos negros (modo sigma)
 	 */
-	private static void calavera(GuiGraphicsExtractor g, int variante, float golpe) {
+	static void calavera(GuiGraphicsExtractor g, int variante, float golpe) {
 		for (int y = 0; y < 32; y++)
 			for (int x = 0; x < 32; x++) {
 				double u = (x + 0.5 - 16) / 16.0, v = (y + 0.5 - 16) / 16.0;

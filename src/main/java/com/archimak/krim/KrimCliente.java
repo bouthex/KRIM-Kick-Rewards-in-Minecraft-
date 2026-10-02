@@ -317,11 +317,16 @@ public class KrimCliente implements ClientModInitializer {
 		}
 
 		// Centro
+		// Centro: aro dorado con la calavera del meme (dibujo propio)
 		float hub = radio / 72f;
-		disco(g, m, 15 * hub, 0xFF3E2723, 6f, 4);
-		disco(g, m, 13 * hub, 0xFFFFC107, 6f, 4);
-		disco(g, m, 10 * hub, 0xFFB71C1C, 6f, 4);
-		textoCentrado(g, m, font, "KRIM", 0, -3 * hub, 0.6f * hub, 0xFFFFFFFF);
+		disco(g, m, 18 * hub, 0xFF3E2723, 5f, 4);
+		disco(g, m, 16 * hub, 0xFFFFC107, 5f, 4);
+		disco(g, m, 14 * hub, 0xFF1A1A1A, 5f, 4);
+		m.pushMatrix();
+		float tamCal = (22f * hub) / 32f;
+		m.scale(tamCal, tamCal);
+		FunnyPantalla.calavera(g, frenada ? 1 : 0, parpadeo ? 1f : 0f);
+		m.popMatrix();
 
 		// Puntero rojo arriba, apuntando hacia abajo
 		int top = Math.round(-radio - 13);

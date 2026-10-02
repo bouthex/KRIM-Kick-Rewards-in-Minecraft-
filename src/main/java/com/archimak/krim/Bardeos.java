@@ -6,49 +6,38 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Bardeos al que canjeó: frases fijas + plantillas que se combinan (miles de variantes).
- * Humor de barrio: sin insultos por orientación, discapacidad, origen ni nada de eso.
+ * Puteadas fuertes de barrio. Lo único que no se usa: insultos por discapacidad, orientación u origen.
  * No repite ninguno de los últimos 40.
  */
 public final class Bardeos {
 	private static final List<String> FIJOS = List.of(
-			"%u tiene un palo metido en el orto", "%u se baña una vez por mes y se hace el limpio",
-			"%u le pide permiso a la mamá para canjear", "%u juega en pacífico y se muere igual",
-			"%u todavía cree que Herobrine es real", "%u tiene la autoestima de un zombie bebé",
-			"%u perdió una pelea contra una gallina", "%u gastó sus puntos en esto porque no tiene amigos",
-			"%u come la pizza con cuchillo y tenedor", "%u le pone ketchup al asado", "%u le pone azúcar al mate y lo defiende",
-			"%u se tira pedos en el colectivo y mira al de al lado", "a %u lo dejan en visto hasta los bots",
-			"%u tiene menos onda que un cartel de CERRADO", "%u se quedó dormido en su propio cumpleaños",
-			"%u usa medias con ojotas y se cree facha", "%u le debe plata al kiosquero desde 2019",
-			"%u se peina con un tenedor", "%u le tiene miedo a las ovejas", "%u se mira al espejo y el espejo pide perdón",
-			"%u llora con las publicidades de seguros", "%u se ríe de sus propios chistes y no son buenos",
-			"%u tiene el cerebro en modo avión", "%u tiene más deudas que diamantes", "%u se cae de la cama y le echa la culpa al lag",
-			"%u es la razón por la que el shampoo tiene instrucciones", "%u nació con lag", "%u es tan feo que el creeper explotó del susto",
-			"%u se hace el misterioso pero no tiene ningún secreto", "%u perdió al ta-te-ti contra un aldeano",
-			"%u tiene la billetera más vacía que tus cofres", "%u saluda a los NPC y espera respuesta",
-			"%u pone el microondas en 1:11 porque le da paz", "%u se sacó un 2 en recreo", "%u se pierde en su propia casa",
-			"%u tira la cadena antes de terminar", "%u se pone perfume para ir a sacar la basura", "%u le habla a las plantas y las plantas lo ignoran",
-			"%u se comió el guisito de la abuela y le echó la culpa al perro", "%u googlea cómo hacer hielo",
-			"%u se quedó encerrado en el baño de su casa", "%u canjea la ruleta y reza", "%u tiene el récord mundial de muertes por creeper",
-			"%u se asusta con su propia sombra en Minecraft", "%u maneja como juega: mal", "%u todavía no aprendió a atarse los cordones",
-			"%u se confundió de stream y se quedó por lástima", "a %u lo echaron de un grupo de WhatsApp de una sola persona",
-			"%u tiene un palo metido en el orto y otro de repuesto", "%u huele a pata de creeper mojado",
-			"%u se hace el que labura pero mira streams todo el día", "%u pone 'jajaja' sin reírse", "%u se cree pro y muere en el tutorial",
-			"%u tiene más fe en la ruleta que en su vida", "%u se compró una cama gamer para dormir mejor y sigue manco",
-			"%u le grita al juego como si lo escuchara", "%u le pide perdón a los mobs antes de matarlos",
-			"%u se olvidó de respirar mientras leía esto", "%u tiene un hámster de mascota y el hámster lo mantiene",
-			"%u le cuenta sus problemas al aldeano", "%u se enamoró de una vaca de Minecraft", "%u todavía no sabe para qué sirve la mesa de crafteo",
-			"%u se ahoga en un balde de agua", "%u le tiene miedo a la oscuridad y a la luz", "%u se pone nervioso en el chat de su propia familia",
-			"%u es el único que se perdió en un mundo plano", "%u se comió la galleta de la fortuna y le salió 'no'",
-			"%u tiene el mismo nivel de habilidad que una papa", "%u no sabe si es lunes o domingo hace tres semanas",
-			"%u le dice 'amigo' al repartidor", "%u se ofende con los memes de él mismo", "%u canjeó esto y se arrepintió en el acto",
-			"a %u le dicen 'el de los puntos' porque es lo único que aporta", "%u es fan de sí mismo y es el único",
-			"%u pide 'una más y me voy' desde 2020", "%u se cree el protagonista y es un extra", "%u se escapó de un creeper caminando para atrás",
-			"%u tiene la paciencia de un creeper con hipo");
+			"%u es un pelotudo de mierda", "%u es un forro de primera", "%u es un sorete con patas", "%u, andá a cagar",
+			"%u tiene un palo metido en el orto", "%u es más inútil que un cenicero en una moto", "%u es un boludo atómico",
+			"la concha de tu madre, %u", "%u es tan forro que lo echaron del grupo de la familia", "%u, sos un desperdicio de oxígeno",
+			"%u es un pajero de mierda y lo sabe todo el chat", "%u juega como el orto y encima canjea", "%u, chupame un huevo",
+			"%u es un hijo de puta con suerte de mierda", "%u, sos tan feo que tu vieja te daba la teta de espaldas",
+			"%u es un cagón que llora con los creepers", "%u es el error más grande de sus viejos", "%u tiene el cerebro de un sorete seco",
+			"%u, tomatela y no vuelvas", "%u es un rata que no regala ni la hora", "%u es un salame de mierda con WiFi",
+			"%u nació por una apuesta perdida", "%u es tan pelotudo que se perdió en un pasillo", "%u, metete los puntos en el orto",
+			"%u es un forro que pide permiso para respirar", "%u tiene menos luces que un pozo de mina", "%u es la cagada del barrio",
+			"a %u lo parieron por el orto y se nota", "%u es un mamerto de manual", "%u, sos el hijo que nadie pidió",
+			"%u es un gil de goma", "%u huele a culo de zombie", "%u es un tarado con micrófono", "%u es más pajero que un mono en un zoológico",
+			"%u, ojalá te explote un creeper en la jeta", "%u es un forro y su perro también", "%u es tan inútil que el creeper le tuvo lástima",
+			"%u es un pelotudo con premio", "%u se caga encima cuando oscurece", "%u, sos un sorete flotando en la pileta del chat",
+			"%u tiene la personalidad de un ladrillo mojado", "%u es un boludo profesional con título", "%u es la vergüenza de su árbol genealógico",
+			"%u, ni tu vieja te banca", "%u es un forrazo de proporciones bíblicas", "%u es un pelotudo que se cree vivo",
+			"%u canjeó esto con la plata del almuerzo, pobre gil", "%u, cerrá el orto un rato", "%u tiene la cara de un culo con bigote",
+			"%u es un mocoso de mierda con ínfulas", "%u es más malo que pisar un Lego descalzo", "%u, chupala", "%u es un pancho sin salchicha",
+			"%u es un pelotudo nivel dios", "%u es un forro que aplaude cuando aterriza el avión", "a %u le chupa un huevo todo y se le nota en la cara",
+			"%u se chupa los dedos después de rascarse el culo", "%u es un sorete de dos patas y medio cerebro", "%u, sos una cagada envuelta en papel de regalo",
+			"%u es tan pelotudo que le pegó a un creeper con la mano", "%u, la próxima canjeá un poco de dignidad", "%u es un hijo de puta pero hijo de puta",
+			"%u es un boludo con más suerte que habilidad", "%u se tira pedos y se los huele orgulloso", "%u tiene olor a pata desde 2015",
+			"%u, ni el warden te quiere escuchar", "%u es un forro de los que ya no se fabrican");
 
-	private static final List<String> ADJ = List.of("lento", "inútil", "aburrido", "manco", "pesado", "tacaño", "perdido", "raro",
-			"malo", "torpe", "olvidadizo", "cagón", "dormido", "denso", "desorganizado", "llorón", "quejoso", "distraído",
-			"gruñón", "ruidoso");
-	private static final List<String> COMP = List.of("una tortuga con sueño", "un creeper sin pólvora", "un lunes a la mañana",
+	private static final List<String> ADJ = List.of("pelotudo", "forro", "boludo", "inútil", "pajero", "cagón", "sorete",
+			"tarado", "gil", "salame", "rata", "manco", "llorón", "chupamedias", "mamerto", "pancho", "otario", "garca", "pesado", "feo");
+	private static final List<String> COMP = List.of("un sorete en una pileta", "la concha de la lora", "un perro con dos colas",
+			"un creeper sin pólvora", "un lunes a la mañana",
 			"el WiFi de la abuela", "una gallina en el Nether", "un zombie bebé", "un aldeano desempleado", "un colectivo en hora pico",
 			"el chiste de un tío", "una cama en el Nether", "un pico de madera", "un esqueleto sin arco", "un enderman bajo la lluvia",
 			"un caracol con resaca", "una fila en el banco");
@@ -62,7 +51,8 @@ public final class Bardeos {
 			"y se lo contó orgulloso a la familia", "y lloró en vivo", "y le echó la culpa al chat", "y dijo que era estrategia",
 			"y lo volvería a hacer", "y perdió todo el inventario", "y ahora vive en un pozo", "y el creeper se rió de él",
 			"y se fue a dormir enojado", "y pidió ayuda a la abuela", "y lo filmó en vertical", "y desde ese día no es el mismo",
-			"y se cree un genio", "y pidió un reembolso al chat", "y se lo cuenta a todos en el asado", "y lo puso en su CV");
+			"y se cree un genio", "y pidió un reembolso al chat", "y se lo cuenta a todos en el asado", "y lo puso en su CV",
+			"el muy pelotudo", "como el forro que es", "y encima se hace el vivo", "porque es un boludo de nacimiento");
 	private static final List<String> COSA = List.of("un palo", "un pico de madera", "un cactus", "una antorcha", "un creeper chiquito",
 			"un bloque de tierra", "una caña de pescar", "un pan entero", "una espada de oro", "un balde de lava", "una pala");
 	private static final List<String> LUGAR = List.of("en el orto", "en la cola", "en el culo");
@@ -82,7 +72,7 @@ public final class Bardeos {
 		for (int i = 0; i < 20; i++) {
 			int x = r().nextInt(100);
 			if (x < 45) b = uno(FIJOS);
-			else if (x < 65) b = "%u es más " + uno(ADJ) + " que " + uno(COMP);
+			else if (x < 65) b = uno(List.of("%u es más ", "%u, sos más ", "la puta madre, %u es más ")) + uno(ADJ) + " que " + uno(COMP);
 			else if (x < 85) b = "%u " + uno(ACCION) + " " + uno(CONSEC);
 			else b = "%u tiene " + uno(COSA) + " metido " + uno(LUGAR) + " " + uno(REMATE);
 			if (!RECIENTES.contains(b)) break;
