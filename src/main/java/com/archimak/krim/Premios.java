@@ -278,6 +278,30 @@ public final class Premios {
 		});
 	}
 
+	/**
+	 * Canje "mob hostil random": un mob al azar con el nombre del que canjeó, solo de los justos.
+	 * Afuera: piglin bruto, hoglin, zoglin, vindicador, evocador, ilusionista, shulker, ghast, esqueleto wither,
+	 * guardián (y, como en toda la ruleta, nunca warden, wither, dragón, elder guardian, devastador, enderman,
+	 * blaze, lepisma ni gigante).
+	 */
+	private static final java.util.Set<String> NO_EN_CANJE = java.util.Set.of("piglin_brute", "hoglin", "zoglin", "vindicator",
+			"evoker", "illusioner", "shulker", "ghast", "wither_skeleton", "guardian");
+
+	public static void hostilCanje(MinecraftServer s, ServerPlayer p, String us) {
+		List<Mob> justos = new ArrayList<>();
+		for (Mob m : MOBS) if (!NO_EN_CANJE.contains(m.id()) && m.lugar() != Lugar.AGUA && m.lugar() != Lugar.GRANDE) justos.add(m);
+		int total = 0;
+		for (Mob m : justos) total += m.peso();
+		int x = r().nextInt(total);
+		Mob elegido = justos.get(0);
+		for (Mob m : justos) { x -= m.peso(); if (x < 0) { elegido = m; break; } }
+		ServerLevel lvl = (ServerLevel) p.level();
+		for (int i = 0; i < elegido.min(); i++) invocar(s, lugar(lvl, p, elegido.lugar()), elegido.id(), elegido.extra(), us, "red");
+		cmd(s, "execute at @p run playsound minecraft:entity.evoker.prepare_summon master @p ~ ~ ~ 1 1");
+		Krim.avisoGrande(s, Krim.fuente(s), us + " te mandó: " + may(elegido.nombre()) + (elegido.min() > 1 ? " x" + elegido.min() : ""), "red");
+		Registro.info("HOSTIL", elegido.id() + " x" + elegido.min() + " de " + us);
+	}
+
 	static void invocar(MinecraftServer s, BlockPos pos, String id, String extra, String nombre, String color) {
 		String marca = "krim_r" + System.nanoTime();
 		String nbt = "{Tags:[\"" + Krim.TAG_RULETA + "\",\"" + marca + "\"]," + SIN + ",CustomNameVisible:1b,"
