@@ -297,7 +297,7 @@ public final class Premios {
 		for (Mob m : justos) { x -= m.peso(); if (x < 0) { elegido = m; break; } }
 		Mob m = elegido;
 		String que = may(m.nombre()) + (m.min() > 1 ? " x" + m.min() : "");
-		Krim.conAviso(s, us, "te manda: " + que, 2, (sv, pl) -> {
+		Krim.conAviso(s, us, "te manda: " + que, 2, 500, (sv, pl) -> {
 			ServerLevel lvl = (ServerLevel) pl.level();
 			for (int i = 0; i < m.min(); i++) invocar(sv, lugar(lvl, pl, m.lugar()), m.id(), m.extra(), us, "red");
 			cmd(sv, "execute at @p run playsound minecraft:entity.evoker.prepare_summon master @p ~ ~ ~ 1 1");

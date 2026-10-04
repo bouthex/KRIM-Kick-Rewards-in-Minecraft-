@@ -40,7 +40,8 @@ public final class Mascota {
 			Map.entry("armadillo", "un armadillo"), Map.entry("sniffer", "un sniffer"), Map.entry("turtle", "una tortuga"),
 			Map.entry("allay", "un allay"), Map.entry("cod", "un bacalao"), Map.entry("salmon", "un salmón"),
 			Map.entry("tropical_fish", "un pez tropical"), Map.entry("axolotl", "un ajolote"), Map.entry("squid", "un calamar"),
-			Map.entry("glow_squid", "un calamar brillante"), Map.entry("dolphin", "un delfín"), Map.entry("tadpole", "un renacuajo"));
+			Map.entry("glow_squid", "un calamar brillante"), Map.entry("dolphin", "un delfín"), Map.entry("tadpole", "un renacuajo"),
+			Map.entry("pufferfish", "un pez globo"));
 
 	// ---------- Entrada animada: el animal cae del cielo despacio con brillos dorados ----------
 	private static final int ALTURA_MAX = 4;      // bloques por encima del suelo
@@ -99,22 +100,24 @@ public final class Mascota {
 		String pedido = ALIAS.getOrDefault(tipoPedido, tipoPedido);
 
 		List<String> candidatos = new ArrayList<>();
-		if (Config.animalesTierra.contains(pedido) || (Config.animalesAgua.contains(pedido) && agua != null)) {
+		if (Config.animalesTierra.contains(pedido) || Config.animalesAgua.contains(pedido)) {
 			candidatos.add(pedido);
 		} else {
 			if (!tipoPedido.equals("aleatorio")) {
 				Registro.aviso("MASCOTA", "Tipo \"" + tipoPedido + "\" no disponible (no está en las listas o no hay agua cerca), se elige al azar");
 			}
+			// Todos con la misma chance, también los de agua: caen volando como los demás, haya agua o no
 			List<String> pool = new ArrayList<>(Config.animalesTierra);
-			if (agua != null) pool.addAll(Config.animalesAgua);
+			pool.addAll(Config.animalesAgua);
+			if (!pool.contains("pufferfish")) pool.add("pufferfish");
 			java.util.Collections.shuffle(pool, ThreadLocalRandom.current());
-			candidatos.addAll(pool.subList(0, Math.min(4, pool.size()))); // hasta 4 intentos si algún id falla
+			candidatos.addAll(pool.subList(0, Math.min(6, pool.size()))); // varios intentos por si alguno no se puede
 		}
 
 		CommandSourceStack src = Krim.fuente(s);
 		for (String id : candidatos) {
-			boolean deAgua = Config.animalesAgua.contains(id);
-			BlockPos donde = deAgua ? caidaAlAgua(lvl, agua) : lugarDeCaida(lvl, p);
+			boolean deAgua = Config.animalesAgua.contains(id) || id.equals("pufferfish");
+			BlockPos donde = (deAgua && agua != null) ? caidaAlAgua(lvl, agua) : lugarDeCaida(lvl, p);
 			Entity e = invocar(s, src, lvl, id, donde, deAgua, nombre);
 			if (e == null) {
 				Registro.aviso("MASCOTA", "No se pudo crear \"" + id + "\" (¿id inválido en esta versión?), pruebo otro");
@@ -138,6 +141,7 @@ public final class Mascota {
 
 	private static Entity invocar(MinecraftServer s, CommandSourceStack src, ServerLevel lvl, String id, BlockPos pos,
 			boolean deAgua, String nombre) {
+		if (CON_MONTURA.contains(id)) return invocarMontable(s, src, lvl, id, pos, nombre);
 		String marca = "krim_n" + System.nanoTime();
 		String nbt = "{Tags:[\"" + Krim.TAG_ANIMAL + "\",\"" + marca + "\"],PersistenceRequired:1b,CustomNameVisible:1b," + Krim.SIN_BOTIN + ","
 				+ (id.equals("chicken") ? "EggLayTime:2147483647," : "") // la gallina del chat no pone huevos
@@ -146,8 +150,9 @@ public final class Mascota {
 		String lugar = (pos.getX() + 0.5) + " " + pos.getY() + " " + (pos.getZ() + 0.5);
 		Krim.cmd(s, src, "execute as @p at @s run summon minecraft:" + id + " " + lugar + " " + nbt);
 
-		// Caída lenta (sin daño) mientras dura la entrada
+		// Caída lenta (sin daño) mientras dura la entrada; los de agua además son inmunes mientras caen
 		Krim.cmd(s, src, "effect give @e[tag=" + marca + "] minecraft:slow_falling 10 0 true");
+		if (deAgua) Krim.cmd(s, src, "effect give @e[tag=" + marca + "] minecraft:resistance 12 4 true");
 		Krim.cmd(s, src, "execute as @p at @s run playsound minecraft:block.amethyst_block.chime neutral @a "
 				+ (pos.getX() + 0.5) + " " + pos.getY() + " " + (pos.getZ() + 0.5) + " 1 1.2");
 
@@ -158,16 +163,58 @@ public final class Mascota {
 	}
 
 	/**
+	 * Montables: se invocan SIN datos extra, igual que un caballo normal del juego (Minecraft les arma solo
+	 * la raza, la velocidad y el salto), y recién después se les pone nombre, tag, montura y dueño.
+	 */
+	private static Entity invocarMontable(MinecraftServer s, CommandSourceStack src, ServerLevel lvl, String id, BlockPos pos, String nombre) {
+		AABB zona = new AABB(pos).inflate(6);
+		java.util.Set<java.util.UUID> antes = new java.util.HashSet<>();
+		for (Entity e : lvl.getEntities((Entity) null, zona, e -> true)) antes.add(e.getUUID());
+		String lugar = (pos.getX() + 0.5) + " " + pos.getY() + " " + (pos.getZ() + 0.5);
+		Krim.cmd(s, src, "execute as @p at @s run summon minecraft:" + id + " " + lugar);
+		List<Entity> nuevas = lvl.getEntities((Entity) null, zona,
+				e -> !antes.contains(e.getUUID()) && ("minecraft:" + id).equals(e.getEncodeId()));
+		if (nuevas.isEmpty()) return null;
+		Entity e = nuevas.get(0);
+		String u = e.getUUID().toString();
+		Krim.cmd(s, src, "tag " + u + " add " + Krim.TAG_ANIMAL);
+		Krim.cmd(s, src, "data merge entity " + u + " {CustomName:{text:\"" + nombre + "\",color:\"aqua\"},CustomNameVisible:1b,"
+				+ "PersistenceRequired:1b," + Krim.SIN_BOTIN + "}");
+		Krim.cmd(s, src, "item replace entity " + u + " saddle with minecraft:saddle");
+		Krim.cmd(s, src, "effect give " + u + " minecraft:slow_falling 10 0 true");
+		Krim.cmd(s, src, "execute as @p at @s run playsound minecraft:block.amethyst_block.chime neutral @a " + lugar + " 1 1.2");
+		CAYENDO.add(new Cayendo(e));
+		return e;
+	}
+
+	/**
 	 * Caballos y compañía no son "TamableAnimal": se doman con tameWithName(jugador), que además los deja con vos como dueño.
 	 * Se busca por nombre para no depender del paquete de la clase (cambió en las versiones nuevas).
 	 */
 	private static void domarConDueno(Entity e, ServerPlayer p) {
-		for (java.lang.reflect.Method mt : e.getClass().getMethods()) {
-			if (mt.getName().equals("tameWithName") && mt.getParameterCount() == 1 && mt.getParameterTypes()[0].isInstance(p)) {
-				try { mt.invoke(e, p); return; } catch (Exception ex) { Registro.error("MASCOTA", "No se pudo domar con dueño", ex); }
-			}
+		boolean dueno = llamar(e, "tameWithName", p);
+		boolean domado = llamar(e, "setTamed", true);
+		if (!dueno) llamar(e, "setOwner", p);
+		// Diagnóstico: si el caballo no se deja manejar, esta línea dice qué falló
+		Object esDomado = leer(e, "isTamed"), tieneMontura = leer(e, "isSaddled");
+		Registro.info("MASCOTA", e.getClass().getSimpleName() + ": domado=" + esDomado + " montura=" + tieneMontura
+				+ " (tameWithName " + (dueno ? "ok" : "no") + ", setTamed " + (domado ? "ok" : "no") + ")");
+	}
+
+	/** Llama a un método público de 1 parámetro por nombre (compatible con el argumento). */
+	private static boolean llamar(Object o, String metodo, Object arg) {
+		for (java.lang.reflect.Method mt : o.getClass().getMethods()) {
+			if (!mt.getName().equals(metodo) || mt.getParameterCount() != 1) continue;
+			Class<?> t = mt.getParameterTypes()[0];
+			boolean encaja = t.isInstance(arg) || (t == boolean.class && arg instanceof Boolean);
+			if (!encaja) continue;
+			try { mt.invoke(o, arg); return true; } catch (Exception ex) { Registro.error("MASCOTA", "Falló " + metodo, ex); }
 		}
-		Registro.aviso("MASCOTA", "No encontré tameWithName en " + e.getClass().getSimpleName() + ": queda manso sin dueño");
+		return false;
+	}
+
+	private static Object leer(Object o, String metodo) {
+		try { return o.getClass().getMethod(metodo).invoke(o); } catch (Exception ex) { return "?"; }
 	}
 
 	/** Para los de agua: aparecen hasta 3 bloques arriba del agua (si hay aire) y caen adentro. */

@@ -15,7 +15,7 @@ public final class AvisoEstado {
 	static void agregar(String usuario, String texto, int tipo, int msHastaLlegar) {
 		long ahora = RuedaEstado.ahoraMs();
 		AVISOS.removeIf(a -> ahora > a.finMs());
-		AVISOS.add(new Aviso(usuario, texto, tipo, ahora, ahora + msHastaLlegar, ahora + msHastaLlegar + 250));
+		AVISOS.add(new Aviso(usuario, texto, tipo, ahora, ahora + msHastaLlegar, ahora + msHastaLlegar + 150));
 	}
 
 	private AvisoEstado() { }
