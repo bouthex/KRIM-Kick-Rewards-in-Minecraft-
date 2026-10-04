@@ -173,7 +173,8 @@ public final class Mascota {
 		String lugar = (pos.getX() + 0.5) + " " + pos.getY() + " " + (pos.getZ() + 0.5);
 		Krim.cmd(s, src, "execute as @p at @s run summon minecraft:" + id + " " + lugar);
 		List<Entity> nuevas = lvl.getEntities((Entity) null, zona,
-				e -> !antes.contains(e.getUUID()) && ("minecraft:" + id).equals(e.getEncodeId()));
+				e -> !antes.contains(e.getUUID())
+						&& ("minecraft:" + id).equals(String.valueOf(net.minecraft.world.entity.EntityType.getKey(e.getType()))));
 		if (nuevas.isEmpty()) return null;
 		Entity e = nuevas.get(0);
 		String u = e.getUUID().toString();
