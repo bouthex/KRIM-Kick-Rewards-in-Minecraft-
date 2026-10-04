@@ -130,7 +130,7 @@ public final class Mascota {
 			}
 			String quien = NOMBRES.getOrDefault(id, id);
 			Registro.info("MASCOTA", id + " \"" + nombre + "\" de " + usuario + extra);
-			Krim.avisoGrande(s, src, usuario + " te regaló " + quien + ": " + nombre, "aqua");
+			Krim.cmd(s, src, "tellraw @a [{text:\"" + usuario + " te regaló " + quien + ": \",color:\"aqua\"},{text:\"" + nombre + "\",color:\"white\"}]");
 			return;
 		}
 		Registro.error("MASCOTA", "No se pudo crear ningún animal para \"" + nombre + "\" de " + usuario, null);

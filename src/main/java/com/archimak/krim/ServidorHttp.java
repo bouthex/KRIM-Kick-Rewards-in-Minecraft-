@@ -63,7 +63,7 @@ public final class ServidorHttp {
 				if (nombre.isEmpty()) nombre = usuario.equals("El chat") ? "Creeper del chat" : usuario;
 				String n = nombre;
 				boolean ok = Krim.encolar("creeper", "nombre=\"" + n + "\" usuario=\"" + usuario + "\"",
-						(s, p) -> Krim.conAviso(s, usuario, "te manda un CREEPER", 2, (sv, pl) -> Krim.creeper(sv, pl, n, usuario)));
+						(s, p) -> Krim.conAviso(s, usuario, "te manda un CREEPER", 2, 700, (sv, pl) -> Krim.creeper(sv, pl, n, usuario)));
 				responder(c, ok ? 200 : 503, ok ? "ok" : "no hay ningun mundo abierto");
 			}
 			case "/cartel" -> {

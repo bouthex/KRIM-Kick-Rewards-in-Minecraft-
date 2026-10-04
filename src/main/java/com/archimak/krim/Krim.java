@@ -123,14 +123,18 @@ public class Krim implements ModInitializer {
 		return false;
 	}
 
-	// ---------- Aviso previo + acción a los 3 segundos ----------
-	static final int AVISO_MS = 3000;
+	// ---------- Aviso previo + acción al segundo ----------
+	static final int AVISO_MS = 1000;
 
-	/** Muestra la tarjeta de aviso y, 3 segundos después, hace la acción (así hay tiempo de reaccionar). */
+	/** Muestra la tarjeta de aviso y, 1 segundo después, hace la acción. */
 	static void conAviso(MinecraftServer s, String usuario, String texto, int tipo, BiConsumer<MinecraftServer, ServerPlayer> accion) {
-		AvisoEstado.agregar(usuario, texto, tipo, AVISO_MS);
+		conAviso(s, usuario, texto, tipo, AVISO_MS, accion);
+	}
+
+	static void conAviso(MinecraftServer s, String usuario, String texto, int tipo, int ms, BiConsumer<MinecraftServer, ServerPlayer> accion) {
+		AvisoEstado.agregar(usuario, texto, tipo, ms);
 		cmd(s, fuente(s), "execute at @p run playsound minecraft:block.note_block.bell master @p ~ ~ ~ 0.8 " + (tipo == 2 ? "0.8" : "1.3"));
-		Ruleta.despues(AVISO_MS / 50, sv -> {
+		Ruleta.despues(Math.max(1, ms / 50), sv -> {
 			ServerPlayer p = Ruleta.jugador(sv);
 			if (p == null) return;
 			try { accion.accept(sv, p); } catch (Exception e) { Registro.error("CANJE", "Falló después del aviso: " + texto, e); }

@@ -14,6 +14,7 @@ import java.util.List;
  * Cartel con el mensaje del chat delante del jugador, mirándolo.
  * Nunca reemplaza bloques: solo se pone en aire, sobre un bloque donde un cartel se sostiene,
  * y además el setblock usa "keep" (no hace nada si el lugar no está vacío). Queda para siempre y encerado.
+ * Si estás en el agua o en el aire, se pone igual flotando (en el agua, mojado). Si estás encerrado, te llega como ítem.
  */
 public final class Cartel {
 	private static final int ANCHO = 15;
@@ -26,11 +27,18 @@ public final class Cartel {
 
 		BlockPos pos = buscarLugar(lvl, p, dx, dz);
 		CommandSourceStack src = Krim.fuente(s);
+		boolean forzado = false;
 		if (pos == null) {
-			Registro.aviso("CARTEL", "Sin lugar libre delante del jugador para \"" + texto + "\" de " + usuario);
-			Krim.aviso(s, src, "No había lugar para el cartel de " + usuario, "red");
+			// En el agua o en el aire: se pone igual, flotando (en el agua queda "mojado" y no rompe nada)
+			pos = lugarForzado(lvl, p, dx, dz);
+			forzado = true;
+		}
+		if (pos == null) {
+			// Encerrado entre bloques: el cartel te llega como ítem con el mensaje, así el canje no se pierde
+			darComoItem(s, src, texto, usuario);
 			return;
 		}
+		boolean agua = lvl.getBlockState(pos).is(Blocks.WATER);
 
 		int rotacion = Math.floorMod(Math.round((yaw + 180f) / 22.5f), 16); // el frente mira al jugador
 		List<String> l = lineas(texto);
@@ -43,13 +51,13 @@ public final class Cartel {
 				+ "\",{text:\"" + firma + "\",color:\"red\",bold:1b}]}}";
 		Krim.cmd(s, src, "execute as @p at @s run setblock "
 				+ pos.getX() + " " + pos.getY() + " " + pos.getZ()
-				+ " minecraft:oak_sign[rotation=" + rotacion + "]" + nbt + " keep");
+				+ " minecraft:oak_sign[rotation=" + rotacion + (agua ? ",waterlogged=true" : "") + "]" + nbt + (agua ? " replace" : " keep"));
 
 		if (lvl.getBlockState(pos).is(Blocks.OAK_SIGN)) {
-			Registro.info("CARTEL", "Colocado en " + pos.getX() + " " + pos.getY() + " " + pos.getZ() + ": \"" + texto + "\" de " + usuario);
-			Krim.aviso(s, src, usuario + " te dejó un cartel", "yellow");
+			Registro.info("CARTEL", "Colocado" + (forzado ? " (forzado)" : "") + " en " + pos.getX() + " " + pos.getY() + " " + pos.getZ() + ": \"" + texto + "\" de " + usuario);
 		} else {
-			Registro.aviso("CARTEL", "El setblock no colocó el cartel en " + pos.getX() + " " + pos.getY() + " " + pos.getZ());
+			Registro.aviso("CARTEL", "El setblock no colocó el cartel en " + pos.getX() + " " + pos.getY() + " " + pos.getZ() + ", se da como ítem");
+			darComoItem(s, src, texto, usuario);
 		}
 	}
 
@@ -69,6 +77,27 @@ public final class Cartel {
 			return pos;
 		}
 		return null;
+	}
+
+	/** Igual que buscarLugar pero acepta aire o agua y no pide piso: el cartel queda flotando. Nunca reemplaza bloques sólidos. */
+	private static BlockPos lugarForzado(ServerLevel lvl, ServerPlayer p, double dx, double dz) {
+		BlockPos pies = p.blockPosition();
+		int[] distancias = { 2, 3, 1 };
+		int[] costados = { 0, 1, -1 };
+		int[] alturas = { 1, 0, 2, -1 };
+		for (int d : distancias) for (int c : costados) for (int h : alturas) {
+			BlockPos pos = BlockPos.containing(p.getX() + dx * d + dz * c, p.getY() + h, p.getZ() + dz * d - dx * c);
+			if (pos.equals(pies) || pos.equals(pies.above())) continue;
+			var estado = lvl.getBlockState(pos);
+			if (estado.isAir() || estado.is(Blocks.WATER)) return pos;
+		}
+		return null;
+	}
+
+	private static void darComoItem(MinecraftServer s, CommandSourceStack src, String texto, String usuario) {
+		Krim.cmd(s, src, "give @p minecraft:oak_sign[minecraft:custom_name={text:\"Cartel de " + usuario + "\",italic:false,color:\"gold\"},"
+				+ "minecraft:lore=[{text:\"" + texto + "\",italic:false,color:\"white\"}]] 1");
+		Registro.info("CARTEL", "Sin lugar: el cartel de " + usuario + " se dio como ítem");
 	}
 
 	/** Reparte el texto en hasta 3 líneas de 15 caracteres, cortando por palabras. */
