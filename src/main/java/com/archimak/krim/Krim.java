@@ -131,7 +131,8 @@ public class Krim implements ModInitializer {
 		conAviso(s, usuario, texto, tipo, AVISO_MS, accion);
 	}
 
-	static void conAviso(MinecraftServer s, String usuario, String texto, int tipo, int ms, BiConsumer<MinecraftServer, ServerPlayer> accion) {
+	static void conAviso(MinecraftServer s, String usuario, String texto, int tipo, int msPedido, BiConsumer<MinecraftServer, ServerPlayer> accion) {
+		int ms = switch (Config.avisoModo) { case 0 -> 50; case 2 -> 1000; case 3 -> 2000; default -> msPedido; };
 		AvisoEstado.agregar(usuario, texto, tipo, ms);
 		cmd(s, fuente(s), "execute at @p run playsound minecraft:block.note_block.bell master @p ~ ~ ~ 0.8 " + (tipo == 2 ? "0.8" : "1.3"));
 		Ruleta.despues(Math.max(1, ms / 50), sv -> {

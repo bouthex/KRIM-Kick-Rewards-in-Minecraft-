@@ -131,7 +131,7 @@ public final class Ruleta {
 		long el = RuedaEstado.ahoraMs() - rueda.inicioMs();
 		if (el < GIRO_MS) {
 			int sector = RuedaEstado.Datos.sectorBajoPuntero(rueda.rotacion(el));
-			if (sector != ultimoSector) {
+			if (sector != ultimoSector && Config.clicsRueda) {
 				ultimoSector = sector;
 				double tono = 0.8 + 0.8 * Math.min(1.0, el / (double) GIRO_MS);
 				cmd(s, "execute at @p run playsound minecraft:block.note_block.hat master @p ~ ~ ~ 0.7 " + tono);
@@ -153,7 +153,7 @@ public final class Ruleta {
 	private static void empezar(MinecraftServer s, ServerPlayer p) {
 		Pedido pedido = COLA.poll();
 		usuarioActual = pedido.usuario();
-		boolean tregua = p.getHealth() < 8.0F;
+		boolean tregua = Config.treguaVida > 0 && p.getHealth() < Config.treguaVida;
 		premio = null;
 		if (pedido.forzar() != null) {
 			premio = Premios.forzado(s, p, usuarioActual, pedido.forzar());

@@ -311,7 +311,8 @@ public class KrimCliente implements ClientModInitializer {
 		Font font = mc.font;
 		int w = mc.getWindow().getGuiScaledWidth();
 		int h = mc.getWindow().getGuiScaledHeight();
-		float radio = Math.max(50f, Math.min(100f, h * 0.38f));
+		float escalaCfg = Config.tamanoRueda == 0 ? 0.75f : Config.tamanoRueda == 2 ? 1.2f : 1f;
+		float radio = Math.max(40f, Math.min(100f * escalaCfg, h * 0.38f * escalaCfg));
 		float cx = w / 2f, cy = h / 2f - 8f;
 
 		// Escala: entra con rebote y sale achicándose

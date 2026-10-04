@@ -143,7 +143,30 @@ public final class Premios {
 		return null;
 	}
 
+	/** A qué categoría de la configuración pertenece cada premio. */
+	private static String grupo(Premio x) {
+		String c = x.categoria();
+		if (x.clave().startsWith("funny:wachin")) return "wachin";
+		if (x.clave().equals("funny:jumpscare")) return "funnys";
+		return switch (c) {
+			case "mob" -> "mobs";
+			case "castigo", "efmalo" -> "castigos";
+			case "jefe" -> "jefes";
+			case "funny" -> "funnys";
+			case "trivia" -> "preguntas";
+			case "hablador" -> "parlante";
+			case "burla" -> "burlas";
+			case "mensaje", "frase" -> "mensajes";
+			case "locura" -> "locuras";
+			case "doble", "nada" -> "";
+			default -> "regalos";
+		};
+	}
+
 	private static boolean permitido(Premio x, boolean tregua, boolean hostilesOk) {
+		String g = grupo(x);
+		if (!g.isEmpty() && !Config.categoria(g)) return false;
+		if (x.clave().equals("funny:jumpscare") && !Config.jumpscare) return false;
 		if ((x.clase() == Clase.HOSTIL || x.clase() == Clase.JEFE) && (tregua || !hostilesOk)) return false;
 		return !(x.clase() == Clase.MALO && tregua);
 	}

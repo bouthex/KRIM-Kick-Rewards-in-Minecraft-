@@ -4,18 +4,36 @@
 	"version": "${version}",
 	"name": "KRIM - Kick Rewards in Minecraft",
 	"description": "Canjes de Kick en Minecraft: creepers con nombre que solo dañan al jugador, carteles con mensajes y animales con nombre. Los mobs del chat no sueltan nada.",
-	"authors": ["archimak"],
+	"authors": [
+		"archimak"
+	],
 	"license": "MIT",
 	"environment": "*",
 	"entrypoints": {
-		"main": ["com.archimak.krim.Krim"],
-		"client": ["com.archimak.krim.KrimCliente"]
+		"main": [
+			"com.archimak.krim.Krim"
+		],
+		"client": [
+			"com.archimak.krim.KrimCliente"
+		],
+		"modmenu": [
+			"com.archimak.krim.KrimModMenu"
+		]
 	},
-	"mixins": ["krim.mixins.json"],
+	"mixins": [
+		"krim.mixins.json"
+	],
 	"depends": {
 		"fabricloader": ">=0.19.3",
 		"minecraft": "~26.2",
 		"java": ">=25",
 		"fabric-api": "*"
+	},
+	"icon": "assets/krim/icon.png",
+	"suggests": {
+		"modmenu": "*"
+	},
+	"contact": {
+		"sources": "https://github.com/bouthex/KRIM-Kick-Rewards-in-Minecraft-"
 	}
 }
