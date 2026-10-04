@@ -295,11 +295,14 @@ public final class Premios {
 		int x = r().nextInt(total);
 		Mob elegido = justos.get(0);
 		for (Mob m : justos) { x -= m.peso(); if (x < 0) { elegido = m; break; } }
-		ServerLevel lvl = (ServerLevel) p.level();
-		for (int i = 0; i < elegido.min(); i++) invocar(s, lugar(lvl, p, elegido.lugar()), elegido.id(), elegido.extra(), us, "red");
-		cmd(s, "execute at @p run playsound minecraft:entity.evoker.prepare_summon master @p ~ ~ ~ 1 1");
-		Krim.avisoGrande(s, Krim.fuente(s), us + " te mandó: " + may(elegido.nombre()) + (elegido.min() > 1 ? " x" + elegido.min() : ""), "red");
-		Registro.info("HOSTIL", elegido.id() + " x" + elegido.min() + " de " + us);
+		Mob m = elegido;
+		String que = may(m.nombre()) + (m.min() > 1 ? " x" + m.min() : "");
+		Krim.conAviso(s, us, "te manda: " + que, 2, (sv, pl) -> {
+			ServerLevel lvl = (ServerLevel) pl.level();
+			for (int i = 0; i < m.min(); i++) invocar(sv, lugar(lvl, pl, m.lugar()), m.id(), m.extra(), us, "red");
+			cmd(sv, "execute at @p run playsound minecraft:entity.evoker.prepare_summon master @p ~ ~ ~ 1 1");
+		});
+		Registro.info("HOSTIL", m.id() + " x" + m.min() + " de " + us);
 	}
 
 	static void invocar(MinecraftServer s, BlockPos pos, String id, String extra, String nombre, String color) {

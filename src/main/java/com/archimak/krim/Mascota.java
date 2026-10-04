@@ -28,6 +28,8 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class Mascota {
 	private static final Map<String, String> ALIAS = Map.of("perro", "wolf", "gato", "cat", "loro", "parrot");
 	private static final Set<String> MANSOS = Set.of("horse", "donkey", "mule", "llama", "trader_llama", "camel");
+	/** Los que se manejan con montura: salen ensillados para poder andar (sin montura te subís pero no se mueven). */
+	private static final Set<String> CON_MONTURA = Set.of("horse", "donkey", "mule", "camel");
 	private static final Map<String, String> NOMBRES = Map.ofEntries(
 			Map.entry("wolf", "un perro"), Map.entry("cat", "un gato"), Map.entry("parrot", "un loro"),
 			Map.entry("horse", "un caballo"), Map.entry("donkey", "un burro"), Map.entry("mule", "una mula"),
@@ -123,6 +125,7 @@ public final class Mascota {
 				animal.tame(p);
 				extra = ", domesticado";
 			} else if (MANSOS.contains(id)) {
+				domarConDueno(e, p);
 				extra = ", manso";
 			}
 			String quien = NOMBRES.getOrDefault(id, id);
@@ -138,7 +141,8 @@ public final class Mascota {
 		String marca = "krim_n" + System.nanoTime();
 		String nbt = "{Tags:[\"" + Krim.TAG_ANIMAL + "\",\"" + marca + "\"],PersistenceRequired:1b,CustomNameVisible:1b," + Krim.SIN_BOTIN + ","
 				+ (id.equals("chicken") ? "EggLayTime:2147483647," : "") // la gallina del chat no pone huevos
-				+ "CustomName:{text:\"" + nombre + "\",color:\"aqua\"}" + (MANSOS.contains(id) ? ",Tame:1b" : "") + "}";
+				+ "CustomName:{text:\"" + nombre + "\",color:\"aqua\"}" + (MANSOS.contains(id) ? ",Tame:1b" : "")
+				+ (CON_MONTURA.contains(id) ? ",equipment:{saddle:{id:\"minecraft:saddle\",count:1}}" : "") + "}";
 		String lugar = (pos.getX() + 0.5) + " " + pos.getY() + " " + (pos.getZ() + 0.5);
 		Krim.cmd(s, src, "execute as @p at @s run summon minecraft:" + id + " " + lugar + " " + nbt);
 
@@ -151,6 +155,19 @@ public final class Mascota {
 		if (!encontradas.isEmpty()) CAYENDO.add(new Cayendo(encontradas.get(0)));
 		Krim.cmd(s, src, "tag @e[tag=" + marca + "] remove " + marca);
 		return encontradas.isEmpty() ? null : encontradas.get(0);
+	}
+
+	/**
+	 * Caballos y compañía no son "TamableAnimal": se doman con tameWithName(jugador), que además los deja con vos como dueño.
+	 * Se busca por nombre para no depender del paquete de la clase (cambió en las versiones nuevas).
+	 */
+	private static void domarConDueno(Entity e, ServerPlayer p) {
+		for (java.lang.reflect.Method mt : e.getClass().getMethods()) {
+			if (mt.getName().equals("tameWithName") && mt.getParameterCount() == 1 && mt.getParameterTypes()[0].isInstance(p)) {
+				try { mt.invoke(e, p); return; } catch (Exception ex) { Registro.error("MASCOTA", "No se pudo domar con dueño", ex); }
+			}
+		}
+		Registro.aviso("MASCOTA", "No encontré tameWithName en " + e.getClass().getSimpleName() + ": queda manso sin dueño");
 	}
 
 	/** Para los de agua: aparecen hasta 3 bloques arriba del agua (si hay aire) y caen adentro. */

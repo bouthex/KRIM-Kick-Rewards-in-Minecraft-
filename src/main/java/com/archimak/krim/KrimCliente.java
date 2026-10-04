@@ -69,6 +69,70 @@ public class KrimCliente implements ClientModInitializer {
 		dibujarResultadoPregunta(g);
 		dibujarJumpscare(g);
 		dibujarWachin(g);
+		dibujarAvisos(g);
+	}
+
+	// ------------------------------------------------------------------ avisos de canje (tarjeta arriba, estética de la ruleta)
+	private static void dibujarAvisos(GuiGraphicsExtractor g) {
+		if (AvisoEstado.AVISOS.isEmpty()) return;
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.player == null) return;
+		Font font = mc.font;
+		int w = mc.getWindow().getGuiScaledWidth();
+		long ahora = RuedaEstado.ahoraMs();
+		Matrix3x2fStack m = g.pose();
+		int fila = 0;
+		for (AvisoEstado.Aviso a : AvisoEstado.AVISOS) {
+			if (ahora < a.inicioMs() || ahora > a.finMs()) continue;
+			long el = ahora - a.inicioMs();
+			long falta = a.finMs() - ahora;
+			// entra deslizando desde arriba y se va subiendo
+			float bajada = el < 250 ? (float) Math.sin(el / 250f * Math.PI / 2) : falta < 300 ? falta / 300f : 1f;
+			int[] paleta = COLORES[Math.max(0, Math.min(4, a.tipo()))];
+			String linea1 = a.usuario();
+			String linea2 = a.texto();
+			int ancho = Math.max(170, Math.max(Math.round(font.width(linea1) * 1.1f), font.width(linea2)) + 64);
+			int alto = 34;
+			int x0 = (w - ancho) / 2;
+			int y0 = Math.round(-alto - 6 + (alto + 12 + fila * (alto + 6)) * bajada);
+			fila++;
+
+			// sombra, borde dorado y fondo negro (como la rueda)
+			g.fill(x0 - 3, y0 - 3, x0 + ancho + 3, y0 + alto + 3, 0x66000000);
+			g.fill(x0 - 2, y0 - 2, x0 + ancho + 2, y0 + alto + 2, 0xFFB8860B);
+			g.fill(x0 - 1, y0 - 1, x0 + ancho + 1, y0 + alto + 1, 0xFFFFC107);
+			g.fillGradient(x0, y0, x0 + ancho, y0 + alto, 0xF0181018, 0xF00A0A0A);
+			// franja de color según el tipo (verde, amarillo, rojo...)
+			g.fill(x0, y0, x0 + 5, y0 + alto, paleta[0]);
+			// lucecitas arriba, como el aro de la rueda
+			int fase = (int) (el / 120);
+			for (int i = 0; i < 9; i++) {
+				int lx = x0 + 14 + i * (ancho - 28) / 8;
+				g.fill(lx - 1, y0 - 1, lx + 2, y0 + 1, ((i + fase) % 2 == 0) ? 0xFFFFFDE7 : 0xFFFF6F00);
+			}
+			// textos
+			m.pushMatrix();
+			m.translate(x0 + 12, y0 + 5);
+			m.scale(1.1f, 1.1f);
+			g.text(font, linea1, 0, 0, 0xFFFFD54F, true);
+			m.popMatrix();
+			g.text(font, linea2, x0 + 12, y0 + 19, paleta[2], true);
+			// cuenta regresiva en un círculo a la derecha
+			long hasta = a.llegaMs() - ahora;
+			String cuenta = hasta > 0 ? String.valueOf((int) Math.ceil(hasta / 1000.0)) : "¡YA!";
+			int cx = x0 + ancho - 20, cy = y0 + alto / 2;
+			m.pushMatrix();
+			m.translate(cx, cy);
+			disco(g, m, 12, 0xFFFFC107, 8f, 4);
+			disco(g, m, 10, paleta[1], 8f, 4);
+			m.scale(hasta > 0 ? 1.4f : 0.8f, hasta > 0 ? 1.4f : 0.8f);
+			conBorde(g, font, cuenta, -font.width(cuenta) / 2, -4, 0xFFFFFFFF, 0xFF000000);
+			m.popMatrix();
+			// barrita de tiempo dorada abajo
+			long total = a.llegaMs() - a.inicioMs();
+			float resto = Math.max(0f, Math.min(1f, hasta / (float) total));
+			g.fill(x0 + 5, y0 + alto - 2, x0 + 5 + Math.round((ancho - 5) * resto), y0 + alto, 0xFFFFC107);
+		}
 	}
 
 	// ------------------------------------------------------------------ wachín: bardeo gigante

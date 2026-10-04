@@ -63,7 +63,7 @@ public final class ServidorHttp {
 				if (nombre.isEmpty()) nombre = usuario.equals("El chat") ? "Creeper del chat" : usuario;
 				String n = nombre;
 				boolean ok = Krim.encolar("creeper", "nombre=\"" + n + "\" usuario=\"" + usuario + "\"",
-						(s, p) -> Krim.creeper(s, p, n, usuario));
+						(s, p) -> Krim.conAviso(s, usuario, "te manda un CREEPER", 2, (sv, pl) -> Krim.creeper(sv, pl, n, usuario)));
 				responder(c, ok ? 200 : 503, ok ? "ok" : "no hay ningun mundo abierto");
 			}
 			case "/cartel" -> {
@@ -72,7 +72,7 @@ public final class ServidorHttp {
 				if (texto.isEmpty()) texto = "Saludos!";
 				String t = texto;
 				boolean ok = Krim.encolar("cartel", "texto=\"" + t + "\" usuario=\"" + usuario + "\"",
-						(s, p) -> Cartel.colocar(s, p, t, usuario));
+						(s, p) -> Krim.conAviso(s, usuario, "te deja un CARTEL", 1, (sv, pl) -> Cartel.colocar(sv, pl, t, usuario)));
 				responder(c, ok ? 200 : 503, ok ? "ok" : "no hay ningun mundo abierto");
 			}
 			case "/mascota" -> {
@@ -82,7 +82,7 @@ public final class ServidorHttp {
 				if (nombre.isEmpty()) nombre = usuario.equals("El chat") ? "Mascota del chat" : usuario;
 				String n = nombre;
 				boolean ok = Krim.encolar("mascota", "tipo=" + tipo + " nombre=\"" + n + "\" usuario=\"" + usuario + "\"",
-						(s, p) -> Mascota.crear(s, p, tipo, n, usuario));
+						(s, p) -> Krim.conAviso(s, usuario, "te regala una MASCOTA", 0, (sv, pl) -> Mascota.crear(sv, pl, tipo, n, usuario)));
 				responder(c, ok ? 200 : 503, ok ? "ok" : "no hay ningun mundo abierto");
 			}
 			case "/tamano", "/tamaño" -> {
